@@ -1,0 +1,132 @@
+.proxy-container {
+  padding: 24px;
+  background-color: #f4f7f9;
+  min-height: 100vh;
+}
+
+.proxy-header {
+  margin-bottom: 24px;
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.header-title h2 {
+  color: #1e293b;
+  margin: 0;
+}
+
+.icon-shield {
+  font-size: 28px;
+  color: #3b82f6;
+}
+
+.proxy-header p {
+  color: #64748b;
+  margin: 0;
+  font-size: 15px;
+}
+
+/* Formulário de Proxy */
+.proxy-form-section {
+  background: white;
+  padding: 28px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  max-width: 700px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.required {
+  color: #ef4444;
+}
+
+.proxy-form input,
+.proxy-form select,
+.proxy-form textarea {
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.proxy-form input:focus,
+.proxy-form select:focus,
+.proxy-form textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.help-text {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 6px;
+}
+
+.input-error {
+  border-color: #ef4444 !important;
+}
+
+.error-message {
+  color: #ef4444;
+  font-size: 12px;
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+.form-actions {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-enviar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-enviar:hover {
+  background-color: #1d4ed8;
+}
