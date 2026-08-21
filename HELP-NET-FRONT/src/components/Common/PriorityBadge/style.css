@@ -1,0 +1,4 @@
+.priority-badge { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; display: inline-block; }
+.badge-normal { background: #d1ecf1; color: #0c5460; }
+.badge-medio { background: #fff3cd; color: #856404; }
+.badge-critico { background: #f8d7da; color: #721c24; }
