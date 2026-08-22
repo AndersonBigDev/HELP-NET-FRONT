@@ -1,19 +1,34 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { FiHome, FiPlusCircle, FiList, FiLogOut } from 'react-icons/fi';
-import './style.css';
+import { Link } from 'react-router-dom';
+// import './style.css'; // Descomente depois que criar o CSS
 
-export default function Sidebar() {
-  const navigate = useNavigate();
+const Sidebar = () => {
   return (
-    <aside className="layout-sidebar">
-      <div className="sidebar-logo">HelpDesk N3</div>
-      <nav className="sidebar-nav">
-        <Link to="/suporte/dashboard"><FiHome /> Dashboard</Link>
-        <Link to="/cliente/novo-chamado"><FiPlusCircle /> Novo Ticket</Link>
-        <Link to="/cliente/meus-chamados"><FiList /> Meus Tickets</Link>
+    <aside style={{ 
+      width: '260px', 
+      backgroundColor: '#1e293b', 
+      color: 'white', 
+      minHeight: '100vh',
+      padding: '20px'
+    }}>
+      <h2 style={{ marginBottom: '30px', color: '#3b82f6' }}>Help Desk N1/N2</h2>
+      
+      <nav style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        <Link to="/suporte/dashboard" style={{ color: '#cbd5e1', textDecoration: 'none' }}>
+          📊 Dashboard
+        </Link>
+        <Link to="/suporte/filas" style={{ color: '#cbd5e1', textDecoration: 'none' }}>
+          📋 Filas de Atendimento
+        </Link>
+        <Link to="/suporte/proxy" style={{ color: '#cbd5e1', textDecoration: 'none' }}>
+          🛡️ Abertura de Proxy
+        </Link>
+        <Link to="/suporte/usuarios" style={{ color: '#cbd5e1', textDecoration: 'none' }}>
+          👥 Gestão de Usuários
+        </Link>
       </nav>
-      <button className="logout-btn" onClick={() => navigate('/')}><FiLogOut /> Sair</button>
     </aside>
   );
-}
+};
+
+export default Sidebar;

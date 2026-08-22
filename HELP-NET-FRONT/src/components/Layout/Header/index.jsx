@@ -1,14 +1,20 @@
 import React from 'react';
-import { FiUser } from 'react-icons/fi';
-import './style.css';
+// import './style.css'; // Descomente depois que criar o CSS
 
-export default function Header() {
+const Header = () => {
   return (
-    <header className="layout-header">
-      <div className="header-title">Sistema de Gestão de Chamados</div>
-      <div className="header-user">
-        <FiUser /> <span>usuario@helpdesk.com</span>
-      </div>
+    <header style={{ 
+      backgroundColor: '#ffffff', 
+      padding: '20px', 
+      borderBottom: '1px solid #e2e8f0',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center'
+    }}>
+      <h2 style={{ margin: 0, color: '#1e293b' }}>Portal de Suporte</h2>
+      <div style={{ color: '#64748b' }}>Bem-vindo(a), Atendente</div>
     </header>
   );
-}
+};
+
+export default Header;

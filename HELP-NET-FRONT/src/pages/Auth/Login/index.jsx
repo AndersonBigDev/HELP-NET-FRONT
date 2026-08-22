@@ -1,61 +1,71 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import { toast } from 'react-toastify';
 import './style.css';
 
-const schema = yup.object({
+// Esquema de validação dos campos
+const loginSchema = yup.object({
   email: yup.string()
-    .email('Digite um formato de e-mail válido')
-    .matches(/@helpdesk\.com$/, 'Acesso negado: Utilize seu e-mail corporativo @helpdesk.com (RN02)')
+    .email('Formato de e-mail inválido')
     .required('O e-mail é obrigatório'),
-}).required();
+  senha: yup.string()
+    .min(6, 'A senha deve ter pelo menos 6 caracteres')
+    .required('A senha é obrigatória'),
+});
 
-export default function Login() {
-  const [isFirstAccess, setIsFirstAccess] = useState(false);
+const Login = () => {
+  const navigate = useNavigate();
+  
   const { register, handleSubmit, formState: { errors } } = useForm({
-    resolver: yupResolver(schema)
+    resolver: yupResolver(loginSchema)
   });
 
   const onSubmit = (data) => {
-    // Simulação: Se for o primeiro acesso, exibimos o campo de cargo
-    if (!isFirstAccess && data.email === 'novo@helpdesk.com') {
-      setIsFirstAccess(true);
-      toast.info('Primeiro acesso detectado. Por favor, preencha seu cargo (RN03).');
-      return;
-    }
-
-    if (isFirstAccess && !data.cargo) {
-      toast.error('O preenchimento do cargo é obrigatório no primeiro acesso.');
-      return;
-    }
-
-    toast.success('Autenticação realizada com sucesso!');
-    // O Dev 2 gerenciará o redirecionamento global pós-login
+    console.log('Enviando dados para autenticação:', data);
+    
+    // TODO: No futuro, aqui entrará a chamada da API (ex: axios.post('/api/login', data))
+    // Por enquanto, se passar na validação, vamos forçar a entrada no Dashboard:
+    navigate('/suporte/dashboard');
   };
 
   return (
-    <div className="login-wrapper">
-      <div className="login-card">
-        <h2>Help Desk - Login</h2>
-        <form onSubmit={handleSubmit(onSubmit)}>
+    <div className="login-container">
+      <div className="login-box">
+        <div className="login-header">
+          <h2>Help Net</h2>
+          <p>Insira suas credenciais para acessar</p>
+        </div>
+        
+        <form onSubmit={handleSubmit(onSubmit)} className="login-form">
           <div className="form-group">
-            <label>E-mail corporativo</label>
-            <input {...register("email")} placeholder="usuario@helpdesk.com" />
+            <label>E-mail / Usuário</label>
+            <input 
+              type="text" 
+              placeholder="exemplo@empresa.com.br"
+              {...register('email')}
+              className={errors.email ? 'input-error' : ''}
+            />
             {errors.email && <span className="error-text">{errors.email.message}</span>}
           </div>
 
-          {isFirstAccess && (
-            <div className="form-group">
-              <label>Cargo (Primeiro Acesso)</label>
-              <input {...register("cargo")} placeholder="Ex: Analista de Marketing" />
-            </div>
-          )}
+          <div className="form-group">
+            <label>Senha</label>
+            <input 
+              type="password" 
+              placeholder="••••••••"
+              {...register('senha')}
+              className={errors.senha ? 'input-error' : ''}
+            />
+            {errors.senha && <span className="error-text">{errors.senha.message}</span>}
+          </div>
 
-          <button type="submit" className="btn-primary">Entrar no Sistema</button>
+          <button type="submit" className="btn-login">Entrar</button>
         </form>
       </div>
     </div>
   );
-}
+};
+
+export default Login;
