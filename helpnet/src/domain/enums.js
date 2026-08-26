@@ -8,17 +8,25 @@ export const Perfil = {
 };
 
 export const NivelAtendente = {
-  NIVEL_I: { value: "NIVEL_I", label: "Nível I", rank: 1 },
-  NIVEL_II: { value: "NIVEL_II", label: "Nível II", rank: 2 },
-  NIVEL_III: { value: "NIVEL_III", label: "Nível III", rank: 3 },
+  NIVEL_I: { value: "NIVEL_I", label: "Nível I", rank: 1, color: "neutral" },
+  NIVEL_II: { value: "NIVEL_II", label: "Nível II", rank: 2, color: "info" },
+  NIVEL_III: { value: "NIVEL_III", label: "Nível III", rank: 3, color: "warning" },
 };
 
+// RN06: o escalonamento só sobe. Espelha a trava do ChamadoService, que rejeita
+// `novoNivel.ordinal() <= nivelExigido.ordinal()` — por isso é rank estritamente maior.
+export function niveisAcimaDe(nivelAtual) {
+  const rankAtual = NivelAtendente[nivelAtual]?.rank ?? 0;
+  return Object.values(NivelAtendente).filter((n) => n.rank > rankAtual);
+}
+
+// `labelCurto` é para eixos de gráfico, onde o rótulo completo quebraria em duas linhas.
 export const Setor = {
-  INFRAESTRUTURA: { value: "INFRAESTRUTURA", label: "Infraestrutura e Redes" },
-  DESENVOLVIMENTO: { value: "DESENVOLVIMENTO", label: "Sistemas e Desenvolvimento" },
-  RECURSOS_HUMANOS: { value: "RECURSOS_HUMANOS", label: "Recursos Humanos / RH" },
-  ADMINISTRATIVO: { value: "ADMINISTRATIVO", label: "Administração e Financeiro" },
-  OUTROS: { value: "OUTROS", label: "Outros Atendimentos" },
+  INFRAESTRUTURA: { value: "INFRAESTRUTURA", label: "Infraestrutura e Redes", labelCurto: "Infraestrutura" },
+  DESENVOLVIMENTO: { value: "DESENVOLVIMENTO", label: "Sistemas e Desenvolvimento", labelCurto: "Desenvolvimento" },
+  RECURSOS_HUMANOS: { value: "RECURSOS_HUMANOS", label: "Recursos Humanos / RH", labelCurto: "RH" },
+  ADMINISTRATIVO: { value: "ADMINISTRATIVO", label: "Administração e Financeiro", labelCurto: "Administrativo" },
+  OUTROS: { value: "OUTROS", label: "Outros Atendimentos", labelCurto: "Outros" },
 };
 
 export const Urgencia = {

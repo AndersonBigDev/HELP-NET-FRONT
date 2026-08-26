@@ -1,4 +1,4 @@
-import { LayoutGrid, LifeBuoy, LogOut, Ticket, Users } from "lucide-react";
+import { BarChart3, Inbox, LifeBuoy, LogOut, Ticket, Users } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 
@@ -7,9 +7,15 @@ const linkClass = ({ isActive }) =>
     isActive ? "bg-accent-soft text-accent" : "text-text-muted hover:bg-surface-2 hover:text-text"
   }`;
 
-// RNF01: menu lateral fixo. Esta é a fundação/placeholder do Módulo 1 —
-// o Módulo 2 substitui o conteúdo de navegação da fila/dashboard aqui
-// mantendo a mesma casca (largura, cabeçalho, área de usuário).
+function SecaoNav({ titulo }) {
+  return (
+    <p className="mt-4 mb-1 px-3 text-[11px] font-semibold tracking-wider text-text-faint uppercase first:mt-0">
+      {titulo}
+    </p>
+  );
+}
+
+// RNF01: menu lateral fixo, presente em todas as telas pós-login.
 export function AppLayout() {
   const { user, logout } = useAuth();
   const isAtendimento = user?.perfil === "ATENDENTE" || user?.perfil === "ADMIN";
@@ -22,24 +28,37 @@ export function AppLayout() {
           <span className="text-base font-semibold text-text">HelpNet</span>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-1">
+        <nav className="flex flex-1 flex-col gap-0.5">
           {!isAtendimento && (
             <NavLink to="/meus-chamados" className={linkClass}>
               <Ticket size={18} />
               Meus Chamados
             </NavLink>
           )}
+
           {isAtendimento && (
-            <NavLink to="/atendimento" className={linkClass}>
-              <LayoutGrid size={18} />
-              Atendimento
-            </NavLink>
-          )}
-          {isAtendimento && (
-            <NavLink to="/usuarios" className={linkClass}>
-              <Users size={18} />
-              Usuários
-            </NavLink>
+            <>
+              <SecaoNav titulo="Atendimento" />
+              {/* `end` para o link não continuar ativo dentro do detalhe do chamado. */}
+              <NavLink to="/atendimento" end className={linkClass}>
+                <Inbox size={18} />
+                Filas de Atendimento
+              </NavLink>
+              <NavLink to="/atendimento/dashboard" className={linkClass}>
+                <BarChart3 size={18} />
+                Dashboard
+              </NavLink>
+
+              <SecaoNav titulo="Administração" />
+              <NavLink to="/usuarios" className={linkClass}>
+                <Users size={18} />
+                Usuários
+              </NavLink>
+              <NavLink to="/meus-chamados" className={linkClass}>
+                <Ticket size={18} />
+                Meus Chamados
+              </NavLink>
+            </>
           )}
         </nav>
 

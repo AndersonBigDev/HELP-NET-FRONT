@@ -5,6 +5,7 @@ import { useAuth } from "../../auth/AuthContext";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
+import { DataField } from "../../components/ui/DataField";
 import { EmptyState, ErrorBanner, Spinner } from "../../components/ui/Feedback";
 import { Categoria, StatusChamado, Urgencia } from "../../domain/enums";
 import { ChamadoAnexos } from "./ChamadoAnexos";
@@ -108,12 +109,12 @@ export function MeusChamadosPage() {
                 {aberto && (
                   <div className="border-t border-border-soft px-5 py-4">
                     <dl className="mb-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
-                      <Field label="Solicitante" value={user.nome} />
-                      <Field label="E-mail" value={c.emailSolicitante} />
-                      <Field label="Telefone" value="—" />
-                      <Field label="Responsável" value={c.nomeResponsavel} />
-                      <Field label="Nível exigido" value={c.nivelExigido} />
-                      <Field label="Aberto em" value={new Date(c.dataAbertura).toLocaleString("pt-BR")} />
+                      <DataField label="Solicitante" value={user.nome} />
+                      <DataField label="E-mail" value={c.emailSolicitante} />
+                      <DataField label="Telefone" value="—" />
+                      <DataField label="Responsável" value={c.nomeResponsavel} />
+                      <DataField label="Nível exigido" value={c.nivelExigido} />
+                      <DataField label="Aberto em" value={new Date(c.dataAbertura).toLocaleString("pt-BR")} />
                     </dl>
                     <p className="mb-4 text-sm text-text-muted">{c.descricao}</p>
                     <ChamadoAnexos chamadoId={c.id} />
@@ -125,15 +126,6 @@ export function MeusChamadosPage() {
       </div>
 
       <NovoChamadoModal open={modalOpen} onClose={() => setModalOpen(false)} onCreated={carregar} />
-    </div>
-  );
-}
-
-function Field({ label, value }) {
-  return (
-    <div>
-      <dt className="text-xs text-text-faint">{label}</dt>
-      <dd className="text-text">{value || "—"}</dd>
     </div>
   );
 }
