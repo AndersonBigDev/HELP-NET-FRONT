@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
+
+  /* Superfícies (dark, em camadas) */
+  --color-canvas: #0b0e14;
+  --color-surface: #121722;
+  --color-surface-2: #1a2030;
+  --color-surface-3: #232b3f;
+  --color-border: #262e42;
+  --color-border-soft: #1b2233;
+
+  /* Texto */
+  --color-text: #e8eaf2;
+  --color-text-muted: #9aa3b8;
+  --color-text-faint: #626c85;
+
+  /* Acento (CTAs, itens ativos, foco) */
+  --color-accent: #7c5cff;
+  --color-accent-hover: #6a48f2;
+  --color-accent-soft: #1e1a3d;
+  --color-focus: #22d3ee;
+
+  /* Semânticas — status de chamado / urgência / SLA */
+  --color-success: #22c55e;
+  --color-success-soft: #10291c;
+  --color-warning: #f59e0b;
+  --color-warning-soft: #2e2109;
+  --color-danger: #ef4444;
+  --color-danger-soft: #331313;
+  --color-info: #3b82f6;
+  --color-info-soft: #101d33;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  background: var(--color-canvas);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100svh;
+}
+
+* {
+  scrollbar-color: var(--color-surface-3) transparent;
+  scrollbar-width: thin;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
