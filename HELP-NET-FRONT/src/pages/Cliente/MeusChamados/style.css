@@ -1,8 +1,0 @@
-.table-responsive { overflow-x: auto; margin-top: 1.5rem; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-.chamados-table { width: 100%; border-collapse: collapse; text-align: left; }
-.chamados-table th, .chamados-table td { padding: 1rem; border-bottom: 1px solid #eee; }
-.chamados-table th { background-color: #f8f9fa; font-weight: bold; color: #333; }
-.badge { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; margin-top: 0.3rem; }
-.badge-nivel { background: #e2e3e5; color: #383d41; }
-.badge-prioridade { background: #fff3cd; color: #856404; }
-.badge-status { background: #cce5ff; color: #004085; }
