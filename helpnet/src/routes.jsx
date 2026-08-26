@@ -3,7 +3,9 @@ import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { RoleRoute } from "./auth/RoleRoute";
 import { useAuth } from "./auth/AuthContext";
 import { AppLayout } from "./components/layout/AppLayout";
-import { AtendimentoPlaceholderPage } from "./pages/Atendimento/AtendimentoPlaceholderPage";
+import { DashboardPage } from "./pages/Atendimento/DashboardPage";
+import { DetalheChamadoPage } from "./pages/Atendimento/DetalheChamadoPage";
+import { FilasAtendimentoPage } from "./pages/Atendimento/FilasAtendimentoPage";
 import { MeusChamadosPage } from "./pages/Chamados/MeusChamadosPage";
 import { CompletarPerfilPage } from "./pages/CompletarPerfil/CompletarPerfilPage";
 import { LoginPage } from "./pages/Login/LoginPage";
@@ -29,9 +31,12 @@ export function AppRoutes() {
         <Route element={<AppLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/meus-chamados" element={<MeusChamadosPage />} />
-          <Route path="/atendimento" element={<AtendimentoPlaceholderPage />} />
 
+          {/* Módulo 2 — área de atendimento, restrita a ATENDENTE/ADMIN. */}
           <Route element={<RoleRoute allow={["ATENDENTE", "ADMIN"]} />}>
+            <Route path="/atendimento" element={<FilasAtendimentoPage />} />
+            <Route path="/atendimento/chamados/:id" element={<DetalheChamadoPage />} />
+            <Route path="/atendimento/dashboard" element={<DashboardPage />} />
             <Route path="/usuarios" element={<UsuariosPage />} />
           </Route>
         </Route>
