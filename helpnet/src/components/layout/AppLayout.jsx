@@ -1,4 +1,4 @@
-import { BarChart3, Inbox, LifeBuoy, LogOut, Ticket, Users } from "lucide-react";
+import { BarChart3, HardDrive, Inbox, LifeBuoy, LogOut, Ticket, Users } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 
@@ -30,10 +30,18 @@ export function AppLayout() {
 
         <nav className="flex flex-1 flex-col gap-0.5">
           {!isAtendimento && (
-            <NavLink to="/meus-chamados" className={linkClass}>
-              <Ticket size={18} />
-              Meus Chamados
-            </NavLink>
+            <>
+              <NavLink to="/meus-chamados" className={linkClass}>
+                <Ticket size={18} />
+                Meus Chamados
+              </NavLink>
+              {/* GET /equipamentos é liberado para o perfil USUARIO, recortado pelo
+                  setor dele — a tela entra como consulta, sem ações de gestão. */}
+              <NavLink to="/equipamentos" className={linkClass}>
+                <HardDrive size={18} />
+                Equipamentos
+              </NavLink>
+            </>
           )}
 
           {isAtendimento && (
@@ -53,6 +61,10 @@ export function AppLayout() {
               <NavLink to="/usuarios" className={linkClass}>
                 <Users size={18} />
                 Usuários
+              </NavLink>
+              <NavLink to="/equipamentos" className={linkClass}>
+                <HardDrive size={18} />
+                Equipamentos
               </NavLink>
               <NavLink to="/meus-chamados" className={linkClass}>
                 <Ticket size={18} />

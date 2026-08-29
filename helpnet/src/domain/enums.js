@@ -48,6 +48,26 @@ export const Categoria = {
   OUTROS: { value: "OUTROS", label: "Outros", urgenciaPadrao: null, setor: null },
 };
 
+// RF09 — roteamento automático. Quem decide urgência e setor é o backend, em
+// `ChamadoService.criarChamado`: para toda categoria diferente de OUTROS ele ignora a
+// urgência recebida e aplica `categoria.getUrgenciaPadrao()` e `getSetorResponsavel()`.
+// As funções abaixo espelham essa regra só para a tela mostrar o resultado antes do
+// POST — a fonte da verdade continua sendo o servidor.
+export function urgenciaDaCategoria(categoria) {
+  const padrao = Categoria[categoria]?.urgenciaPadrao;
+  return padrao ? Urgencia[padrao] : null;
+}
+
+export function setorDaCategoria(categoria) {
+  const setor = Categoria[categoria]?.setor;
+  return setor ? Setor[setor] : null;
+}
+
+// Só OUTROS deixa o solicitante escolher a urgência.
+export function urgenciaEhLivre(categoria) {
+  return categoria === "OUTROS";
+}
+
 export const StatusChamado = {
   ABERTO: { value: "ABERTO", label: "Aberto", color: "info" },
   EM_ANDAMENTO: { value: "EM_ANDAMENTO", label: "Em Andamento", color: "warning" },
