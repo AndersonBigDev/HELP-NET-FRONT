@@ -1,7 +1,7 @@
-import { jwtDecode } from "jwt-decode";
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { authApi } from "../api/authApi";
-import { tokenStorage } from "../api/client";
+import { onSessaoExpirada, tokenStorage } from "../api/client";
+import { lerPayload, tokenExpirado } from "./jwt";
 
 // RN03/RF02: o backend não expõe um "quem sou eu" para o perfil USUARIO
 // (GET /usuarios é restrito a ADMIN/ATENDENTE, e o JWT não carrega
@@ -16,7 +16,8 @@ function readCadastroCompleto(email) {
 }
 
 function decodeUser(token) {
-  const payload = jwtDecode(token);
+  const payload = lerPayload(token);
+  if (!payload) return null;
   return {
     email: payload.sub,
     nome: payload.nome,
@@ -24,20 +25,29 @@ function decodeUser(token) {
   };
 }
 
+// Monta o usuário a partir do token guardado, recusando token expirado ou ilegível.
+// Sem essa checagem a sessão "parecia" viva (o JWT decodifica sem validar `exp`) e a
+// tela abria normalmente, mas toda chamada à API voltava 403.
+function usuarioDoTokenSalvo() {
+  const token = tokenStorage.get();
+  if (!token || tokenExpirado(token)) {
+    tokenStorage.clear();
+    return null;
+  }
+
+  const decoded = decodeUser(token);
+  if (!decoded) {
+    tokenStorage.clear();
+    return null;
+  }
+
+  return { ...decoded, cadastroCompleto: readCadastroCompleto(decoded.email) };
+}
+
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    const token = tokenStorage.get();
-    if (!token) return null;
-    try {
-      const decoded = decodeUser(token);
-      return { ...decoded, cadastroCompleto: readCadastroCompleto(decoded.email) };
-    } catch {
-      tokenStorage.clear();
-      return null;
-    }
-  });
+  const [user, setUser] = useState(usuarioDoTokenSalvo);
 
   const login = useCallback(async (email, senha) => {
     const { token } = await authApi.login(email, senha);
@@ -52,6 +62,10 @@ export function AuthProvider({ children }) {
     tokenStorage.clear();
     setUser(null);
   }, []);
+
+  // Quando o servidor recusa o token no meio da navegação, o interceptor avisa aqui e
+  // a sessão cai na hora — em vez de deixar a tela montada errando a cada requisição.
+  useEffect(() => onSessaoExpirada(logout), [logout]);
 
   const markCadastroCompleto = useCallback(() => {
     setUser((current) => {
