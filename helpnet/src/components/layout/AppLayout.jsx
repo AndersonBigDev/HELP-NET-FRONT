@@ -1,6 +1,7 @@
 import { BarChart3, HardDrive, Inbox, LifeBuoy, LogOut, Ticket, Users } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
+import { SeletorTema } from "../ui/SeletorTema";
 
 const linkClass = ({ isActive }) =>
   `flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
@@ -74,19 +75,23 @@ export function AppLayout() {
           )}
         </nav>
 
-        <div className="border-t border-border-soft pt-3">
-          <div className="mb-2 px-2">
-            <p className="truncate text-sm font-medium text-text">{user?.nome}</p>
-            <p className="truncate text-xs text-text-faint">{user?.email}</p>
+        <div className="flex flex-col gap-3 border-t border-border-soft pt-3">
+          <SeletorTema />
+
+          <div className="border-t border-border-soft pt-3">
+            <div className="mb-2 px-2">
+              <p className="truncate text-sm font-medium text-text">{user?.nome}</p>
+              <p className="truncate text-xs text-text-faint">{user?.email}</p>
+            </div>
+            <button
+              type="button"
+              onClick={logout}
+              className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-surface-2 hover:text-danger"
+            >
+              <LogOut size={18} />
+              Sair
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={logout}
-            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-surface-2 hover:text-danger cursor-pointer"
-          >
-            <LogOut size={18} />
-            Sair
-          </button>
         </div>
       </aside>
 

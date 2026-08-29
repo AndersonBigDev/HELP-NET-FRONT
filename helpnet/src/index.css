@@ -1,9 +1,34 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   TEMA
+
+   Duas dimensões independentes, carimbadas em <html> pelo ThemeProvider:
+
+     data-theme  = "dark" | "light"        → claro ou escuro
+     data-accent = "violeta" | "indigo"    → cor de destaque
+                 | "turquesa" | "magenta"
+                 | "grafite"
+
+   O acento define só MATIZ e CROMA; a LUMINOSIDADE vem do modo, porque a mesma
+   matiz precisa ser mais escura sobre fundo claro e mais clara sobre escuro.
+   Por isso as duas dimensões se combinam sem precisar de um bloco para cada par.
+
+   As cores são escritas em oklch, e não em hex, por dois motivos: a
+   luminosidade é perceptualmente uniforme (um teal e um violeta em L=0.62
+   pesam igual na tela, o que não acontece em HSL), e dá para derivar a paleta
+   inteira de duas variáveis em vez de manter dezenas de hexadecimais.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 @theme {
   --font-sans: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
 
-  /* Superfícies (dark, em camadas) */
+  /* Valores literais do tema padrão (escuro + violeta). Existem para o Tailwind
+     gerar as utilidades e para a página não piscar sem cor caso o JS não rode.
+     Os valores de verdade vêm dos blocos [data-theme] / [data-accent] abaixo,
+     que ficam fora de @layer e por isso sempre vencem estes. */
+
+  /* Superfícies (em camadas) */
   --color-canvas: #0b0e14;
   --color-surface: #121722;
   --color-surface-2: #1a2030;
@@ -33,8 +58,151 @@
   --color-info-soft: #101d33;
 }
 
-html {
+/* ─── Identidade de cada acento ────────────────────────────────────────────
+   `acento-*` pinta os CTAs; `tinta-*` inclina levemente os neutros para a
+   mesma família, para que trocar o acento mude o clima da tela inteira e não
+   só os botões — é o que tira o app do "roxo sobre azul-escuro" fixo.
+
+   O seletor é [data-accent] e não :root[data-accent] de propósito: as bolinhas
+   do seletor de tema carimbam o próprio data-accent e se pintam sozinhas com
+   estas variáveis, sem precisar repetir os valores no JavaScript.
+   ───────────────────────────────────────────────────────────────────────── */
+
+[data-accent="violeta"] {
+  --acento-h: 285;
+  --acento-c: 0.235;
+  --tinta-h: 275;
+  --tinta-c: 0.022;
+}
+
+[data-accent="indigo"] {
+  --acento-h: 264;
+  --acento-c: 0.19;
+  --acento-l-escuro: 0.59;
+  --tinta-h: 264;
+  --tinta-c: 0.02;
+}
+
+[data-accent="turquesa"] {
+  --acento-h: 195;
+  --acento-c: 0.115;
+  --acento-l-escuro: 0.55;
+  --tinta-h: 207;
+  --tinta-c: 0.02;
+}
+
+[data-accent="magenta"] {
+  --acento-h: 350;
+  --acento-c: 0.19;
+  --acento-l-escuro: 0.61;
+  --tinta-h: 340;
+  --tinta-c: 0.018;
+}
+
+/* Monocromático: croma quase zero nos dois eixos. */
+[data-accent="grafite"] {
+  --acento-h: 255;
+  --acento-c: 0.028;
+  --acento-l-escuro: 0.585;
+  --tinta-h: 255;
+  --tinta-c: 0.005;
+}
+
+/* ─── Modo escuro ─────────────────────────────────────────────────────────
+   Reproduz a paleta original do HelpNet quando o acento é "violeta".
+   ───────────────────────────────────────────────────────────────────────── */
+
+:root[data-theme="dark"] {
   color-scheme: dark;
+
+  /* Luminosidade do acento. Cada matiz tem a sua porque contraste WCAG não é
+     uniforme como o oklch: um teal e um violeta na mesma luminosidade oklch
+     rendem contrastes bem diferentes contra o branco do botão primário.
+     O padrão 0.62 reproduz o violeta original do HelpNet. */
+  --acento-l: var(--acento-l-escuro, 0.62);
+  --acento-l-hover: calc(var(--acento-l-escuro, 0.62) - 0.06);
+  --amostra-l: 0.62;
+
+  --color-canvas: oklch(0.166 calc(var(--tinta-c, 0.022) * 0.8) var(--tinta-h, 275));
+  --color-surface: oklch(0.205 var(--tinta-c, 0.022) var(--tinta-h, 275));
+  --color-surface-2: oklch(0.258 calc(var(--tinta-c, 0.022) * 1.3) var(--tinta-h, 275));
+  --color-surface-3: oklch(0.318 calc(var(--tinta-c, 0.022) * 1.5) var(--tinta-h, 275));
+  --color-border: oklch(0.335 calc(var(--tinta-c, 0.022) * 1.5) var(--tinta-h, 275));
+  --color-border-soft: oklch(0.265 calc(var(--tinta-c, 0.022) * 1.3) var(--tinta-h, 275));
+
+  --color-text: oklch(0.925 calc(var(--tinta-c, 0.022) * 0.4) var(--tinta-h, 275));
+  --color-text-muted: oklch(0.715 calc(var(--tinta-c, 0.022) * 1.1) var(--tinta-h, 275));
+  --color-text-faint: oklch(0.545 calc(var(--tinta-c, 0.022) * 1.4) var(--tinta-h, 275));
+
+  --color-accent: oklch(var(--acento-l) var(--acento-c, 0.235) var(--acento-h, 285));
+  --color-accent-hover: oklch(var(--acento-l-hover) var(--acento-c, 0.235) var(--acento-h, 285));
+  --color-accent-soft: oklch(0.255 calc(var(--acento-c, 0.235) * 0.32) var(--acento-h, 285));
+  --color-focus: oklch(0.8 0.13 205);
+
+  /* Fixas em todos os acentos: cor de status carrega significado (RNF03 — SLA
+     estourado é vermelho) e não pode mudar junto com a preferência estética. */
+  --color-success: oklch(0.75 0.17 150);
+  --color-success-soft: oklch(0.27 0.055 150);
+  --color-warning: oklch(0.79 0.155 78);
+  --color-warning-soft: oklch(0.275 0.055 78);
+  --color-danger: oklch(0.68 0.195 22);
+  --color-danger-soft: oklch(0.28 0.07 22);
+  --color-info: oklch(0.66 0.165 255);
+  --color-info-soft: oklch(0.28 0.065 255);
+}
+
+/* ─── Modo claro ──────────────────────────────────────────────────────────
+   Contraparte desenhada, não inversão: os neutros são quase brancos com um
+   traço da tinta do acento, e as semânticas escurecem para continuarem
+   legíveis sobre fundo claro (o mesmo verde de badge do escuro sumiria aqui).
+   ───────────────────────────────────────────────────────────────────────── */
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* Sobre fundo claro todas as matizes já passam de 4.8:1 com texto branco,
+     então nenhuma precisa de ajuste individual. */
+  --acento-l: var(--acento-l-claro, 0.53);
+  --acento-l-hover: calc(var(--acento-l-claro, 0.53) - 0.06);
+  --amostra-l: 0.53;
+
+  --color-canvas: oklch(0.972 calc(var(--tinta-c, 0.022) * 0.5) var(--tinta-h, 275));
+  --color-surface: oklch(1 0 var(--tinta-h, 275));
+  --color-surface-2: oklch(0.958 calc(var(--tinta-c, 0.022) * 0.7) var(--tinta-h, 275));
+  --color-surface-3: oklch(0.922 var(--tinta-c, 0.022) var(--tinta-h, 275));
+  --color-border: oklch(0.878 calc(var(--tinta-c, 0.022) * 1.2) var(--tinta-h, 275));
+  --color-border-soft: oklch(0.928 calc(var(--tinta-c, 0.022) * 0.9) var(--tinta-h, 275));
+
+  --color-text: oklch(0.255 calc(var(--tinta-c, 0.022) * 1.2) var(--tinta-h, 275));
+  --color-text-muted: oklch(0.5 calc(var(--tinta-c, 0.022) * 1.2) var(--tinta-h, 275));
+  --color-text-faint: oklch(0.605 calc(var(--tinta-c, 0.022) * 1.1) var(--tinta-h, 275));
+
+  --color-accent: oklch(var(--acento-l) calc(var(--acento-c, 0.235) * 0.95) var(--acento-h, 285));
+  --color-accent-hover: oklch(var(--acento-l-hover) calc(var(--acento-c, 0.235) * 0.95) var(--acento-h, 285));
+  --color-accent-soft: oklch(0.945 calc(var(--acento-c, 0.235) * 0.2) var(--acento-h, 285));
+  --color-focus: oklch(0.56 0.13 235);
+
+  --color-success: oklch(0.485 0.15 150);
+  --color-success-soft: oklch(0.945 0.045 150);
+  --color-warning: oklch(0.5 0.13 70);
+  --color-warning-soft: oklch(0.95 0.05 78);
+  --color-danger: oklch(0.545 0.195 22);
+  --color-danger-soft: oklch(0.945 0.04 22);
+  --color-info: oklch(0.53 0.165 255);
+  --color-info-soft: oklch(0.945 0.038 255);
+}
+
+/* ─── Amostra do seletor ──────────────────────────────────────────────────
+   Recebe data-accent próprio e se pinta com o acento daquele tema, na
+   luminosidade do modo atual — a bolinha mostra exatamente a cor que o clique
+   vai aplicar, sem duplicar nenhum valor no JavaScript.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.amostra-acento {
+  /* `--amostra-l` e não `--acento-l`: assim toda bolinha usa a mesma
+     luminosidade e elas se diferenciam só pela matiz, sem herdar o ajuste
+     individual do acento que estiver selecionado. */
+  background: oklch(var(--amostra-l, 0.62) var(--acento-c, 0.235) var(--acento-h, 285));
 }
 
 body {
@@ -45,6 +213,9 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
 }
 
 #root {
@@ -59,4 +230,10 @@ body {
 :focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body {
+    transition: none;
+  }
 }
