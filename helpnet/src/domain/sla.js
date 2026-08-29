@@ -1,9 +1,9 @@
 // RNF03 — política de SLA.
 //
-// O backend não tem campo de prazo no `Chamado` (só `dataAbertura`; `dataFechamento`
-// existe na entidade mas nem é exposto no ChamadoResponseDTO). Enquanto isso, o prazo
-// é derivado aqui a partir da urgência. Este é o ÚNICO lugar com essa regra — quando o
-// backend passar a devolver o prazo, só `calcularSla` muda.
+// O backend passou a calcular o prazo e a devolvê-lo em `ChamadoResponseDTO.prazoLimite`
+// (`ChamadoService.calcularPrazoSla`). Passamos a usar esse valor como fonte da verdade;
+// a tabela abaixo virou fallback para chamados antigos, gravados antes do campo existir.
+// Ela espelha exatamente as faixas do backend, então os dois caminhos dão o mesmo prazo.
 
 export const PRAZO_HORAS_POR_URGENCIA = {
   CRITICA: 4,
@@ -39,7 +39,9 @@ export function formatarDuracao(ms) {
  */
 export function calcularSla(chamado, agora = new Date()) {
   const horas = PRAZO_HORAS_POR_URGENCIA[chamado.urgencia] ?? PRAZO_HORAS_POR_URGENCIA.NORMAL;
-  const prazo = new Date(new Date(chamado.dataAbertura).getTime() + horas * UMA_HORA_MS);
+  const prazo = chamado.prazoLimite
+    ? new Date(chamado.prazoLimite)
+    : new Date(new Date(chamado.dataAbertura).getTime() + horas * UMA_HORA_MS);
   const restanteMs = prazo.getTime() - agora.getTime();
 
   if (STATUS_ENCERRADOS.includes(chamado.status)) {

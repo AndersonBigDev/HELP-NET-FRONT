@@ -5,7 +5,7 @@ import { SlaTag } from "../../components/ui/SlaTag";
 import { Categoria, NivelAtendente, Setor, StatusChamado, Urgencia } from "../../domain/enums";
 import { calcularSla } from "../../domain/sla";
 
-export function ChamadoFilaItem({ chamado, nomeSolicitante }) {
+export function ChamadoFilaItem({ chamado }) {
   // RNF03: atrasado ganha borda vermelha, não só o badge.
   const atrasado = calcularSla(chamado).atrasado;
 
@@ -31,7 +31,7 @@ export function ChamadoFilaItem({ chamado, nomeSolicitante }) {
           {Categoria[chamado.categoria]?.label ?? chamado.categoria}
         </p>
         <p className="mt-0.5 truncate text-xs text-text-muted">
-          {nomeSolicitante ?? chamado.emailSolicitante}
+          {chamado.solicitanteNome}
           {chamado.setor && ` · ${Setor[chamado.setor]?.label ?? chamado.setor}`}
           {` · ${new Date(chamado.dataAbertura).toLocaleString("pt-BR")}`}
         </p>

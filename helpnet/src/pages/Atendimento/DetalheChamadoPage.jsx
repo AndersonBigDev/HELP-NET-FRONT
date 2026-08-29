@@ -20,13 +20,13 @@ import { EscalonarModal } from "./EscalonarModal";
 export function DetalheChamadoPage() {
   const { id } = useParams();
   const { chamados, loading, error, recarregar } = useChamados();
-  const { porEmail } = useUsuarios();
+  const { porId } = useUsuarios();
 
   const [escalonarAberto, setEscalonarAberto] = useState(false);
   const [novoChamadoAberto, setNovoChamadoAberto] = useState(false);
 
   const chamado = chamados.find((c) => String(c.id) === String(id));
-  const solicitante = chamado ? porEmail(chamado.emailSolicitante) : null;
+  const solicitante = chamado ? porId(chamado.solicitanteId) : null;
 
   if (loading) {
     return (
@@ -90,16 +90,16 @@ export function DetalheChamadoPage() {
 
         <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
           <DataField label="Protocolo" value={chamado.protocolo} />
-          <DataField label="Solicitante" value={solicitante?.nome} />
+          <DataField label="Solicitante" value={chamado.solicitanteNome} />
           <DataField label="Telefone" value={null} />
-          <DataField label="E-mail" value={chamado.emailSolicitante} />
-          <DataField label="Responsável" value={chamado.nomeResponsavel} />
+          <DataField label="E-mail" value={solicitante?.email} />
+          <DataField label="Responsável" value={chamado.responsavelNome} />
           <DataField label="Tipo" value={Categoria[chamado.categoria]?.label ?? chamado.categoria} />
           <DataField label="Prioridade" value={Urgencia[chamado.urgencia]?.label} />
           <DataField label="Status" value={StatusChamado[chamado.status]?.label} />
           <DataField label="Nível exigido" value={NivelAtendente[chamado.nivelExigido]?.label} />
           <DataField label="Setor responsável" value={Setor[chamado.setor]?.label} />
-          <DataField label="Equipamento" value={chamado.equipamento} />
+          <DataField label="Equipamento" value={chamado.equipamentoNome} />
           <DataField label="Cargo do solicitante" value={solicitante?.cargo} />
         </dl>
       </Card>

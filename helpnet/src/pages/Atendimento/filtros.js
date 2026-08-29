@@ -39,12 +39,15 @@ export function aplicarFiltros(chamados, filtros) {
 
 // RF10 — "Minha Fila".
 //
-// O backend nunca preenche `Chamado.responsavel` (nenhum service atribui, e não há
-// endpoint de "assumir"), então `nomeResponsavel` é sempre "Não atribuído" e um filtro
-// por responsável devolveria lista vazia para sempre. Definimos "minha fila" por
-// AFINIDADE: os chamados que competem ao atendente logado — mesmo nível exigido e
-// mesmo setor. Quem tem só um dos dois preenchidos (o ADMIN não tem nível) é filtrado
-// pelo critério que existir.
+// O backend agora tem PATCH /chamados/{id}/assumir, que preenche `Chamado.responsavel`,
+// então `responsavelNome` já pode vir preenchido. Mesmo assim mantemos "minha fila" por
+// AFINIDADE: os chamados que competem ao atendente logado — mesmo nível exigido e mesmo
+// setor. O recorte serve para achar o que ainda NÃO foi assumido; filtrar por responsável
+// mostraria só o que já está na mão de alguém. Quem tem só um dos dois campos preenchidos
+// (o ADMIN não tem nível) é filtrado pelo critério que existir.
+//
+// TODO: com o "assumir" disponível, vale oferecer os dois recortes na tela (afinidade x
+// atribuídos a mim) em vez de escolher um pelo usuário.
 export function pertenceAMinhaFila(chamado, meuPerfil) {
   if (!meuPerfil) return false;
 

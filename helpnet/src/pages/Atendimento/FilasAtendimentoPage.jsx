@@ -22,9 +22,10 @@ import {
 // aplicados na tela.
 const COLUNAS_CSV = [
   { header: "Protocolo", valor: (c) => c.protocolo },
-  { header: "Solicitante", valor: (c) => c.nomeSolicitante ?? "" },
-  { header: "E-mail do solicitante", valor: (c) => c.emailSolicitante },
-  { header: "Responsável", valor: (c) => c.nomeResponsavel },
+  { header: "Solicitante", valor: (c) => c.solicitanteNome },
+  { header: "E-mail do solicitante", valor: (c) => c.emailSolicitante ?? "" },
+  { header: "Responsável", valor: (c) => c.responsavelNome },
+  { header: "Equipamento", valor: (c) => c.equipamentoNome ?? "" },
   { header: "Categoria", valor: (c) => Categoria[c.categoria]?.label ?? c.categoria },
   { header: "Setor", valor: (c) => Setor[c.setor]?.label ?? "" },
   { header: "Prioridade", valor: (c) => Urgencia[c.urgencia]?.label ?? c.urgencia },
@@ -52,7 +53,7 @@ function AbaFila({ ativa, onClick, children }) {
 
 export function FilasAtendimentoPage() {
   const { chamados, loading, error, recarregar } = useChamados();
-  const { meuPerfil, porEmail, loading: carregandoUsuarios } = useUsuarios();
+  const { meuPerfil, porId, loading: carregandoUsuarios } = useUsuarios();
 
   const [minhaFila, setMinhaFila] = useState(false);
   const [filtros, setFiltros] = useState(FILTROS_VAZIOS);
@@ -67,7 +68,9 @@ export function FilasAtendimentoPage() {
   const atrasados = visiveis.filter((c) => calcularSla(c).atrasado).length;
 
   function exportar() {
-    const linhas = visiveis.map((c) => ({ ...c, nomeSolicitante: porEmail(c.emailSolicitante)?.nome }));
+    // O ChamadoResponseDTO não devolve o e-mail do solicitante, só o id — resolvemos
+    // pela lista de usuários apenas na exportação, onde o contato faz falta.
+    const linhas = visiveis.map((c) => ({ ...c, emailSolicitante: porId(c.solicitanteId)?.email }));
     baixarCsv(`fila-atendimento-${carimboDeData()}.csv`, COLUNAS_CSV, linhas);
   }
 
@@ -152,11 +155,7 @@ export function FilasAtendimentoPage() {
         {!loading &&
           !error &&
           visiveis.map((c) => (
-            <ChamadoFilaItem
-              key={c.id}
-              chamado={c}
-              nomeSolicitante={porEmail(c.emailSolicitante)?.nome}
-            />
+            <ChamadoFilaItem key={c.id} chamado={c} />
           ))}
       </div>
     </div>
