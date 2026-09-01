@@ -8,7 +8,6 @@ import { DetalheChamadoPage } from "./pages/Atendimento/DetalheChamadoPage";
 import { FilasAtendimentoPage } from "./pages/Atendimento/FilasAtendimentoPage";
 import { MeusChamadosPage } from "./pages/Chamados/MeusChamadosPage";
 import { EquipamentosPage } from "./pages/Equipamentos/EquipamentosPage";
-import { CompletarPerfilPage } from "./pages/CompletarPerfil/CompletarPerfilPage";
 import { LoginPage } from "./pages/Login/LoginPage";
 import { UsuariosPage } from "./pages/Usuarios/UsuariosPage";
 
@@ -27,8 +26,6 @@ export function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
 
       <Route element={<ProtectedRoute />}>
-        <Route path="/completar-perfil" element={<CompletarPerfilPage />} />
-
         <Route element={<AppLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/meus-chamados" element={<MeusChamadosPage />} />
