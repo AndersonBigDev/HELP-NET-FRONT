@@ -5,6 +5,25 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>HelpNet</title>
+    <script>
+      // Carimba o tema salvo ANTES do primeiro paint. Sem isto a página nasce no
+      // tema padrão e pisca ao trocar quando o React monta.
+      // Roda em <head>, então é JS clássico e sem import — as chaves estão
+      // duplicadas de `src/theme/temas.js` de propósito.
+      (function () {
+        try {
+          var modo = localStorage.getItem("helpnet.tema.modo") || "sistema";
+          var acento = localStorage.getItem("helpnet.tema.acento") || "violeta";
+          var claro =
+            modo === "claro" ||
+            (modo === "sistema" && window.matchMedia("(prefers-color-scheme: light)").matches);
+          document.documentElement.dataset.theme = claro ? "light" : "dark";
+          document.documentElement.dataset.accent = acento;
+        } catch (e) {
+          // localStorage bloqueado: o ThemeProvider aplica o padrão ao montar.
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

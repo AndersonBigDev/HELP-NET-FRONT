@@ -16,12 +16,20 @@ function Error({ error }) {
   return <p className="mt-1.5 text-xs text-danger">{error}</p>;
 }
 
-export function Input({ label, error, required, id, className = "", ...props }) {
+// Nota neutra abaixo do campo ("esse valor não muda depois", "opcional"): não é erro,
+// então não usa a cor de perigo. Fica escondida enquanto houver erro, para não competir.
+function Hint({ hint, error }) {
+  if (!hint || error) return null;
+  return <p className="mt-1.5 text-xs text-text-faint">{hint}</p>;
+}
+
+export function Input({ label, error, hint, required, id, className = "", ...props }) {
   return (
     <div>
       <Label label={label} required={required} htmlFor={id} />
       <input id={id} className={`${baseInput} ${className}`} required={required} {...props} />
       <Error error={error} />
+      <Hint hint={hint} error={error} />
     </div>
   );
 }

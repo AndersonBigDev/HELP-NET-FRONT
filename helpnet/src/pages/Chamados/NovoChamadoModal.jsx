@@ -1,14 +1,64 @@
+import { Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { chamadosApi } from "../../api/chamadosApi";
+import { equipamentosApi } from "../../api/equipamentosApi";
 import { usuariosApi } from "../../api/usuariosApi";
 import { useAuth } from "../../auth/AuthContext";
+import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
-import { Input, Select, TextArea } from "../../components/ui/Field";
+import { Select, TextArea } from "../../components/ui/Field";
 import { ErrorBanner } from "../../components/ui/Feedback";
 import { Modal } from "../../components/ui/Modal";
-import { Categoria, optionsOf, Urgencia } from "../../domain/enums";
+import {
+  Categoria,
+  optionsOf,
+  setorDaCategoria,
+  Urgencia,
+  urgenciaDaCategoria,
+  urgenciaEhLivre,
+} from "../../domain/enums";
+import { formatarDuracao, PRAZO_HORAS_POR_URGENCIA } from "../../domain/sla";
 
-const EMPTY = { categoria: "", urgencia: "", descricao: "", equipamento: "", solicitanteId: "" };
+const EMPTY = { categoria: "", urgencia: "", descricao: "", equipamentoId: "", solicitanteId: "" };
+
+const UMA_HORA_MS = 60 * 60 * 1000;
+
+// RF09 — o roteamento automático é decidido no backend a partir da categoria; aqui a
+// tela só antecipa o resultado para o solicitante ver o que vai acontecer.
+function RoteamentoAutomatico({ categoria }) {
+  const urgencia = urgenciaDaCategoria(categoria);
+  const setor = setorDaCategoria(categoria);
+  if (!urgencia) return null;
+
+  const prazo = PRAZO_HORAS_POR_URGENCIA[urgencia.value];
+
+  return (
+    <div className="-mt-1 rounded-lg border border-border bg-surface-2 px-3 py-2.5">
+      <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-text-muted">
+        <Zap size={13} className="text-accent" />
+        Definido automaticamente por esta categoria
+      </p>
+      <dl className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+        <div className="flex items-center gap-2">
+          <dt className="text-xs text-text-faint">Urgência</dt>
+          <dd>
+            <Badge color={urgencia.color}>{urgencia.label}</Badge>
+          </dd>
+        </div>
+        <div className="flex items-center gap-2">
+          <dt className="text-xs text-text-faint">Setor</dt>
+          <dd className="text-text">{setor?.label ?? "—"}</dd>
+        </div>
+        {prazo && (
+          <div className="flex items-center gap-2">
+            <dt className="text-xs text-text-faint">Prazo SLA</dt>
+            <dd className="text-text">{formatarDuracao(prazo * UMA_HORA_MS)}</dd>
+          </div>
+        )}
+      </dl>
+    </div>
+  );
+}
 
 // RF05 (abertura pelo próprio usuário) / RF06 (abertura em nome de outro,
 // exclusiva de Atendente/Admin) / RN04 (limite de 3 chamados ativos,
@@ -20,6 +70,7 @@ export function NovoChamadoModal({ open, onClose, onCreated }) {
   const [form, setForm] = useState(EMPTY);
   const [modoProxy, setModoProxy] = useState(false);
   const [usuariosComuns, setUsuariosComuns] = useState([]);
+  const [equipamentos, setEquipamentos] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -38,12 +89,23 @@ export function NovoChamadoModal({ open, onClose, onCreated }) {
       .catch((err) => setError(err.message));
   }, [open, podeAbrirProxy, modoProxy]);
 
+  // O chamado passou a referenciar o equipamento por id (`ChamadoCreateDTO.equipamentoId`),
+  // não mais por texto livre. A rota devolve só equipamentos ativos, já recortados pelo
+  // perfil de quem está logado.
+  useEffect(() => {
+    if (!open) return;
+    equipamentosApi
+      .listar({ size: 200, sort: "nome" })
+      .then((page) => setEquipamentos(page.content ?? []))
+      .catch((err) => setError(err.message));
+  }, [open]);
+
   function set(field) {
     return (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
   }
 
-  const categoriaSelecionada = form.categoria ? Categoria[form.categoria] : null;
-  const urgenciaAutomatica = categoriaSelecionada && categoriaSelecionada.value !== "OUTROS";
+  const urgenciaLivre = urgenciaEhLivre(form.categoria);
+  const urgenciaAutomatica = urgenciaDaCategoria(form.categoria);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -52,9 +114,11 @@ export function NovoChamadoModal({ open, onClose, onCreated }) {
     try {
       await chamadosApi.criar({
         categoria: form.categoria,
-        urgencia: urgenciaAutomatica ? categoriaSelecionada.urgenciaPadrao : form.urgencia,
+        // O DTO exige `urgencia` mesmo quando o backend vai sobrescrevê-la pela
+        // urgência padrão da categoria — só OUTROS usa de fato o valor enviado.
+        urgencia: urgenciaAutomatica ? urgenciaAutomatica.value : form.urgencia,
         descricao: form.descricao,
-        equipamento: form.equipamento || null,
+        equipamentoId: form.equipamentoId ? Number(form.equipamentoId) : null,
         solicitanteId: modoProxy && form.solicitanteId ? Number(form.solicitanteId) : null,
       });
       onCreated?.();
@@ -74,14 +138,14 @@ export function NovoChamadoModal({ open, onClose, onCreated }) {
             <button
               type="button"
               onClick={() => setModoProxy(false)}
-              className={`flex-1 rounded-md py-1.5 font-medium cursor-pointer ${!modoProxy ? "bg-accent text-white" : "text-text-muted"}`}
+              className={`flex-1 cursor-pointer rounded-md py-1.5 font-medium ${!modoProxy ? "bg-accent text-white" : "text-text-muted"}`}
             >
               Abrir para mim
             </button>
             <button
               type="button"
               onClick={() => setModoProxy(true)}
-              className={`flex-1 rounded-md py-1.5 font-medium cursor-pointer ${modoProxy ? "bg-accent text-white" : "text-text-muted"}`}
+              className={`flex-1 cursor-pointer rounded-md py-1.5 font-medium ${modoProxy ? "bg-accent text-white" : "text-text-muted"}`}
             >
               Abrir em nome de
             </button>
@@ -110,7 +174,7 @@ export function NovoChamadoModal({ open, onClose, onCreated }) {
           onChange={set("categoria")}
         />
 
-        {form.categoria === "OUTROS" ? (
+        {urgenciaLivre ? (
           <Select
             id="urgencia"
             label="Urgência"
@@ -121,11 +185,7 @@ export function NovoChamadoModal({ open, onClose, onCreated }) {
             onChange={set("urgencia")}
           />
         ) : (
-          categoriaSelecionada && (
-            <p className="-mt-2 text-xs text-text-faint">
-              Urgência definida automaticamente: <strong className="text-text-muted">{Urgencia[categoriaSelecionada.urgenciaPadrao].label}</strong>
-            </p>
-          )
+          <RoteamentoAutomatico categoria={form.categoria} />
         )}
 
         <TextArea
@@ -137,12 +197,17 @@ export function NovoChamadoModal({ open, onClose, onCreated }) {
           onChange={set("descricao")}
         />
 
-        <Input
-          id="equipamento"
+        <Select
+          id="equipamentoId"
           label="Equipamento (opcional)"
-          placeholder="Ex: Notebook patrimônio 4521"
-          value={form.equipamento}
-          onChange={set("equipamento")}
+          placeholder={equipamentos.length === 0 ? "Nenhum equipamento ativo disponível" : "Sem equipamento"}
+          disabled={equipamentos.length === 0}
+          options={equipamentos.map((eq) => ({
+            value: String(eq.id),
+            label: `${eq.nome} · ${eq.marca} · patrimônio ${eq.patrimonio}`,
+          }))}
+          value={form.equipamentoId}
+          onChange={set("equipamentoId")}
         />
 
         <ErrorBanner message={error} />

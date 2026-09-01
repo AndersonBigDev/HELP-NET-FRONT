@@ -1,6 +1,7 @@
-import { BarChart3, Inbox, LifeBuoy, LogOut, Ticket, Users } from "lucide-react";
+import { BarChart3, HardDrive, Inbox, LifeBuoy, LogOut, Ticket, Users } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
+import { SeletorTema } from "../ui/SeletorTema";
 
 const linkClass = ({ isActive }) =>
   `flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
@@ -30,10 +31,18 @@ export function AppLayout() {
 
         <nav className="flex flex-1 flex-col gap-0.5">
           {!isAtendimento && (
-            <NavLink to="/meus-chamados" className={linkClass}>
-              <Ticket size={18} />
-              Meus Chamados
-            </NavLink>
+            <>
+              <NavLink to="/meus-chamados" className={linkClass}>
+                <Ticket size={18} />
+                Meus Chamados
+              </NavLink>
+              {/* GET /equipamentos é liberado para o perfil USUARIO, recortado pelo
+                  setor dele — a tela entra como consulta, sem ações de gestão. */}
+              <NavLink to="/equipamentos" className={linkClass}>
+                <HardDrive size={18} />
+                Equipamentos
+              </NavLink>
+            </>
           )}
 
           {isAtendimento && (
@@ -54,6 +63,10 @@ export function AppLayout() {
                 <Users size={18} />
                 Usuários
               </NavLink>
+              <NavLink to="/equipamentos" className={linkClass}>
+                <HardDrive size={18} />
+                Equipamentos
+              </NavLink>
               <NavLink to="/meus-chamados" className={linkClass}>
                 <Ticket size={18} />
                 Meus Chamados
@@ -62,19 +75,23 @@ export function AppLayout() {
           )}
         </nav>
 
-        <div className="border-t border-border-soft pt-3">
-          <div className="mb-2 px-2">
-            <p className="truncate text-sm font-medium text-text">{user?.nome}</p>
-            <p className="truncate text-xs text-text-faint">{user?.email}</p>
+        <div className="flex flex-col gap-3 border-t border-border-soft pt-3">
+          <SeletorTema />
+
+          <div className="border-t border-border-soft pt-3">
+            <div className="mb-2 px-2">
+              <p className="truncate text-sm font-medium text-text">{user?.nome}</p>
+              <p className="truncate text-xs text-text-faint">{user?.email}</p>
+            </div>
+            <button
+              type="button"
+              onClick={logout}
+              className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-surface-2 hover:text-danger"
+            >
+              <LogOut size={18} />
+              Sair
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={logout}
-            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-surface-2 hover:text-danger cursor-pointer"
-          >
-            <LogOut size={18} />
-            Sair
-          </button>
         </div>
       </aside>
 

@@ -6,6 +6,7 @@ import { Setor, StatusChamado } from "../../domain/enums";
 import { calcularSla } from "../../domain/sla";
 import { useChamados } from "../../hooks/useChamados";
 import { corSemantica } from "../../lib/chartTheme";
+import { useTheme } from "../../theme/ThemeContext";
 import {
   GraficoAberturasPorDia,
   GraficoPorSetor,
@@ -76,7 +77,15 @@ function IndicadorCard({ icon: Icon, label, valor, cor = "text", nota }) {
 // RF14 / RN08 / RNF02 — indicadores e gráficos da operação.
 export function DashboardPage() {
   const { chamados, loading, error } = useChamados();
-  const m = useMemo(() => calcularMetricas(chamados), [chamados]);
+  // As cores das séries saem de `corSemantica`, que lê a variável CSS viva. Como
+  // essa leitura não passa pelo React, `versaoTema` entra nas dependências: sem
+  // ela o gráfico ficaria com a paleta anterior até os dados recarregarem.
+  const { versaoTema } = useTheme();
+  const m = useMemo(
+    () => calcularMetricas(chamados),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [chamados, versaoTema],
+  );
 
   if (loading) {
     return (

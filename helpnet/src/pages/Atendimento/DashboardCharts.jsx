@@ -15,7 +15,9 @@ import { corToken } from "../../lib/chartTheme";
 // Specs fixos: eixos/grade recessivos (hairline sólida), barras finas com a ponta
 // arredondada e a base quadrada, linha de 2px. Texto sempre em token de texto —
 // nunca na cor da série.
-const EIXO = { fontSize: 12, fill: corToken("text-muted") };
+// Função e não constante de módulo: `corToken` lê a variável CSS viva, então um
+// valor congelado no import continuaria com a cor do tema anterior depois da troca.
+const eixo = () => ({ fontSize: 12, fill: corToken("text-muted") });
 const ESPESSURA_BARRA = 24;
 
 function TooltipCustomizado({ active, payload, label, sufixo = "chamados" }) {
@@ -38,8 +40,8 @@ export function GraficoPorStatus({ dados }) {
     <ResponsiveContainer width="100%" height={240}>
       <BarChart data={dados} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
         <CartesianGrid stroke={corToken("border")} strokeWidth={1} vertical={false} />
-        <XAxis dataKey="label" tick={EIXO} tickLine={false} axisLine={{ stroke: corToken("border") }} interval={0} />
-        <YAxis tick={EIXO} tickLine={false} axisLine={false} allowDecimals={false} width={40} />
+        <XAxis dataKey="label" tick={eixo()} tickLine={false} axisLine={{ stroke: corToken("border") }} interval={0} />
+        <YAxis tick={eixo()} tickLine={false} axisLine={false} allowDecimals={false} width={40} />
         <Tooltip content={<TooltipCustomizado />} cursor={{ fill: corToken("surface-2") }} />
         <Bar dataKey="total" maxBarSize={ESPESSURA_BARRA} radius={[4, 4, 0, 0]}>
           {dados.map((d) => (
@@ -57,8 +59,8 @@ export function GraficoPorSetor({ dados }) {
     <ResponsiveContainer width="100%" height={240}>
       <BarChart data={dados} layout="vertical" margin={{ top: 8, right: 16, bottom: 0, left: 8 }}>
         <CartesianGrid stroke={corToken("border")} strokeWidth={1} horizontal={false} />
-        <XAxis type="number" tick={EIXO} tickLine={false} axisLine={false} allowDecimals={false} />
-        <YAxis type="category" dataKey="label" tick={EIXO} tickLine={false} axisLine={false} width={110} />
+        <XAxis type="number" tick={eixo()} tickLine={false} axisLine={false} allowDecimals={false} />
+        <YAxis type="category" dataKey="label" tick={eixo()} tickLine={false} axisLine={false} width={110} />
         <Tooltip content={<TooltipCustomizado />} cursor={{ fill: corToken("surface-2") }} />
         <Bar dataKey="total" fill={corToken("accent")} maxBarSize={ESPESSURA_BARRA} radius={[0, 4, 4, 0]} />
       </BarChart>
@@ -73,8 +75,8 @@ export function GraficoAberturasPorDia({ dados }) {
     <ResponsiveContainer width="100%" height={240}>
       <LineChart data={dados} margin={{ top: 8, right: 16, bottom: 0, left: -20 }}>
         <CartesianGrid stroke={corToken("border")} strokeWidth={1} vertical={false} />
-        <XAxis dataKey="label" tick={EIXO} tickLine={false} axisLine={{ stroke: corToken("border") }} />
-        <YAxis tick={EIXO} tickLine={false} axisLine={false} allowDecimals={false} width={40} />
+        <XAxis dataKey="label" tick={eixo()} tickLine={false} axisLine={{ stroke: corToken("border") }} />
+        <YAxis tick={eixo()} tickLine={false} axisLine={false} allowDecimals={false} width={40} />
         <Tooltip content={<TooltipCustomizado sufixo="aberturas" />} cursor={{ stroke: corToken("border") }} />
         <Line
           type="monotone"

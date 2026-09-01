@@ -7,6 +7,7 @@ import { DashboardPage } from "./pages/Atendimento/DashboardPage";
 import { DetalheChamadoPage } from "./pages/Atendimento/DetalheChamadoPage";
 import { FilasAtendimentoPage } from "./pages/Atendimento/FilasAtendimentoPage";
 import { MeusChamadosPage } from "./pages/Chamados/MeusChamadosPage";
+import { EquipamentosPage } from "./pages/Equipamentos/EquipamentosPage";
 import { CompletarPerfilPage } from "./pages/CompletarPerfil/CompletarPerfilPage";
 import { LoginPage } from "./pages/Login/LoginPage";
 import { UsuariosPage } from "./pages/Usuarios/UsuariosPage";
@@ -31,6 +32,10 @@ export function AppRoutes() {
         <Route element={<AppLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/meus-chamados" element={<MeusChamadosPage />} />
+          {/* O backend libera GET /equipamentos para qualquer autenticado e recorta
+              o resultado por perfil, então a rota fica fora do RoleRoute — o perfil
+              USUARIO vê a listagem do próprio setor, em modo leitura. */}
+          <Route path="/equipamentos" element={<EquipamentosPage />} />
 
           {/* Módulo 2 — área de atendimento, restrita a ATENDENTE/ADMIN. */}
           <Route element={<RoleRoute allow={["ATENDENTE", "ADMIN"]} />}>

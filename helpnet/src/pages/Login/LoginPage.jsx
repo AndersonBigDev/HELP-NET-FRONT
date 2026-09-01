@@ -6,6 +6,7 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Field";
 import { ErrorBanner } from "../../components/ui/Feedback";
+import { SeletorTema } from "../../components/ui/SeletorTema";
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -30,7 +31,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-canvas px-4">
+    <div className="flex min-h-svh flex-col items-center justify-center gap-4 bg-canvas px-4">
       <Card className="w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center gap-2 text-center">
           <span className="flex size-12 items-center justify-center rounded-xl bg-accent-soft text-accent">
@@ -70,6 +71,12 @@ export function LoginPage() {
           </Button>
         </form>
       </Card>
+
+      {/* Deixa trocar claro/escuro antes de entrar. O acento fica só na barra
+          lateral, para não poluir a tela de login. */}
+      <div className="w-52">
+        <SeletorTema compacto />
+      </div>
     </div>
   );
 }
