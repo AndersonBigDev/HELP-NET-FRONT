@@ -11,6 +11,7 @@ import { Categoria, NivelAtendente, Setor, StatusChamado, Urgencia } from "../..
 import { useChamados } from "../../hooks/useChamados";
 import { useUsuarios } from "../../hooks/useUsuarios";
 import { ChamadoAnexos } from "../Chamados/ChamadoAnexos";
+import { ChamadoMensagens } from "../Chamados/ChamadoMensagens";
 import { NovoChamadoModal } from "../Chamados/NovoChamadoModal";
 import { EscalonarModal } from "./EscalonarModal";
 
@@ -107,6 +108,11 @@ export function DetalheChamadoPage() {
       <Card className="mb-4">
         <h2 className="mb-2 text-sm font-semibold text-text">Descrição</h2>
         <p className="text-sm whitespace-pre-line text-text-muted">{chamado.descricao}</p>
+      </Card>
+
+      {/* RF08: conversa com o solicitante. Chamado fechado vira somente leitura. */}
+      <Card className="mb-4">
+        <ChamadoMensagens chamadoId={chamado.id} somenteLeitura={chamado.status === "FECHADO"} />
       </Card>
 
       <Card>
