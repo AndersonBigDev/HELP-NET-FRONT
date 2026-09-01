@@ -1,6 +1,8 @@
-import { BarChart3, HardDrive, Inbox, LifeBuoy, LogOut, Ticket, Users } from "lucide-react";
+import { BarChart3, HardDrive, Inbox, KeyRound, LifeBuoy, LogOut, Ticket, Users } from "lucide-react";
+import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
+import { AlterarSenhaModal } from "../../pages/Perfil/AlterarSenhaModal";
 import { SeletorTema } from "../ui/SeletorTema";
 
 const linkClass = ({ isActive }) =>
@@ -20,6 +22,7 @@ function SecaoNav({ titulo }) {
 export function AppLayout() {
   const { user, logout } = useAuth();
   const isAtendimento = user?.perfil === "ATENDENTE" || user?.perfil === "ADMIN";
+  const [senhaAberta, setSenhaAberta] = useState(false);
 
   return (
     <div className="flex min-h-svh bg-canvas">
@@ -83,6 +86,15 @@ export function AppLayout() {
               <p className="truncate text-sm font-medium text-text">{user?.nome}</p>
               <p className="truncate text-xs text-text-faint">{user?.email}</p>
             </div>
+            {/* RF03: troca da própria senha, disponível a qualquer perfil. */}
+            <button
+              type="button"
+              onClick={() => setSenhaAberta(true)}
+              className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-surface-2 hover:text-text"
+            >
+              <KeyRound size={18} />
+              Alterar senha
+            </button>
             <button
               type="button"
               onClick={logout}
@@ -98,6 +110,8 @@ export function AppLayout() {
       <main className="flex-1 overflow-y-auto px-8 py-8">
         <Outlet />
       </main>
+
+      <AlterarSenhaModal open={senhaAberta} onClose={() => setSenhaAberta(false)} />
     </div>
   );
 }

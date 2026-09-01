@@ -1,11 +1,12 @@
-import { Pencil, Plus, Trash2, Users as UsersIcon } from "lucide-react";
+import { KeyRound, Pencil, Plus, Trash2, Users as UsersIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { usuariosApi } from "../../api/usuariosApi";
-import { Badge } from "../../components/ui/Badge";
+import { useAuth } from "../../auth/AuthContext";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { EmptyState, ErrorBanner, Spinner } from "../../components/ui/Feedback";
 import { NivelAtendente, Perfil, Setor } from "../../domain/enums";
+import { AlterarSenhaModal } from "../Perfil/AlterarSenhaModal";
 import { UsuarioFormModal } from "./UsuarioFormModal";
 
 // RF03: listagem agrupada por cargo e perfil. Agrupamos por perfil (seções)
@@ -22,11 +23,17 @@ function agruparPorPerfil(usuarios) {
 }
 
 export function UsuariosPage() {
+  const { user } = useAuth();
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [resetandoSenhaDe, setResetandoSenhaDe] = useState(null);
+
+  // PATCH /usuarios/{id}/senha é exclusivo do ADMIN. O próprio ADMIN troca a
+  // sua senha pelo menu lateral, que cobra a senha atual.
+  const podeResetarSenha = user?.perfil === "ADMIN";
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -123,7 +130,6 @@ export function UsuariosPage() {
                       <th className="px-4 py-3 font-medium">Cargo</th>
                       <th className="px-4 py-3 font-medium">Setor</th>
                       {perfil === "ATENDENTE" && <th className="px-4 py-3 font-medium">Nível</th>}
-                      <th className="px-4 py-3 font-medium">Cadastro</th>
                       <th className="px-4 py-3" />
                     </tr>
                   </thead>
@@ -140,12 +146,18 @@ export function UsuariosPage() {
                           </td>
                         )}
                         <td className="px-4 py-3">
-                          <Badge color={u.cadastroCompleto ? "success" : "warning"}>
-                            {u.cadastroCompleto ? "Completo" : "Pendente"}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-3">
                           <div className="flex justify-end gap-1">
+                            {podeResetarSenha && u.id !== user?.id && (
+                              <button
+                                type="button"
+                                onClick={() => setResetandoSenhaDe(u)}
+                                aria-label="Redefinir senha"
+                                title="Redefinir senha"
+                                className="rounded-md p-1.5 text-text-muted hover:bg-surface-2 hover:text-accent cursor-pointer"
+                              >
+                                <KeyRound size={16} />
+                              </button>
+                            )}
                             <button
                               type="button"
                               onClick={() => openEdit(u)}
@@ -178,6 +190,12 @@ export function UsuariosPage() {
         onClose={() => setModalOpen(false)}
         usuario={editing}
         onSubmit={editing ? handleEdit : handleCreate}
+      />
+
+      <AlterarSenhaModal
+        open={resetandoSenhaDe != null}
+        onClose={() => setResetandoSenhaDe(null)}
+        usuario={resetandoSenhaDe}
       />
     </div>
   );

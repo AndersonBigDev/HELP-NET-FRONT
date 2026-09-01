@@ -8,20 +8,17 @@ import { Card } from "../../components/ui/Card";
 import { DataField } from "../../components/ui/DataField";
 import { EmptyState, ErrorBanner, Spinner } from "../../components/ui/Feedback";
 import { Categoria, StatusChamado, Urgencia } from "../../domain/enums";
-import { useUsuarios } from "../../hooks/useUsuarios";
 import { ChamadoAnexos } from "./ChamadoAnexos";
+import { ChamadoMensagens } from "./ChamadoMensagens";
 import { NovoChamadoModal } from "./NovoChamadoModal";
 
 const STATUS_ATIVOS = ["ABERTO", "EM_ANDAMENTO"];
 
-// O ChamadoResponseDTO identifica o solicitante por `solicitanteId`/`solicitanteNome`
-// e não devolve mais o e-mail. O JWT também não carrega o id do usuário e o GET
-// /usuarios é bloqueado para o perfil USUARIO, então nesse perfil não há como resolver
-// o próprio id: caímos no nome, que é o único identificador que o token traz.
-// ATENDENTE e ADMIN conseguem ler a lista de usuários e comparam pelo id, que é exato.
-function ehMeuChamado(chamado, user, meuId) {
-  if (meuId != null) return chamado.solicitanteId === meuId;
-  return chamado.solicitanteNome === user.nome;
+// O JWT carrega o id do usuário (claim `id`), então a comparação é exata para todos
+// os perfis. Antes, o perfil USUARIO caía num casamento por nome — que confunde
+// homônimos e quebra se o nome for editado.
+function ehMeuChamado(chamado, user) {
+  return chamado.solicitanteId === user?.id;
 }
 
 // RN05: cada chamado exibe protocolo, dados do solicitante, responsável,
@@ -30,7 +27,6 @@ function ehMeuChamado(chamado, user, meuId) {
 // exibimos "—" nesses campos em vez de inventar dado.
 export function MeusChamadosPage() {
   const { user } = useAuth();
-  const { meuPerfil } = useUsuarios();
 
   const [todos, setTodos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -58,12 +54,7 @@ export function MeusChamadosPage() {
     carregar();
   }, [carregar]);
 
-  // Derivado (e não filtrado dentro do `carregar`) porque `meuPerfil` chega depois da
-  // primeira busca: assim a lista se corrige sozinha quando o id resolve.
-  const chamados = useMemo(
-    () => todos.filter((c) => ehMeuChamado(c, user, meuPerfil?.id)),
-    [todos, user, meuPerfil],
-  );
+  const chamados = useMemo(() => todos.filter((c) => ehMeuChamado(c, user)), [todos, user]);
 
   const ativos = chamados.filter((c) => STATUS_ATIVOS.includes(c.status)).length;
   const limiteAtingido = ativos >= 3;
@@ -139,6 +130,11 @@ export function MeusChamadosPage() {
                     </dl>
                     <p className="mb-4 text-sm text-text-muted">{c.descricao}</p>
                     <ChamadoAnexos chamadoId={c.id} />
+
+                    {/* RF08: o solicitante conversa com o atendente pelo mesmo fio. */}
+                    <div className="mt-5 border-t border-border-soft pt-4">
+                      <ChamadoMensagens chamadoId={c.id} somenteLeitura={c.status === "FECHADO"} />
+                    </div>
                   </div>
                 )}
               </Card>
