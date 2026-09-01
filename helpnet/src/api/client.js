@@ -63,6 +63,11 @@ apiClient.interceptors.response.use(
       error.message ||
       "Não foi possível completar a requisição.";
 
-    return Promise.reject(new Error(message));
+    // Preserva o status no Error. Sem isso a tela só recebe a string e não consegue
+    // distinguir "rota não existe" (404) de "você não pode" (403) — distinção que hoje
+    // importa, porque há endpoints que o front já consome e o backend ainda não expõe.
+    const erro = new Error(message);
+    erro.status = status ?? null;
+    return Promise.reject(erro);
   },
 );
