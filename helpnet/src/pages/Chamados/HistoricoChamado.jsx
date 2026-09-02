@@ -43,6 +43,14 @@ import { useHistoricoChamado } from "../../hooks/useHistoricoChamado";
 // atendente fala COM o solicitante, aqui ele registra o atendimento. O solicitante
 // enxerga a trilha, mas em modo leitura.
 
+// Enquanto o backend não expõe /chamados/{id}/historico, a rota volta 404. Mesma
+// convenção do chat e da troca de senha: aviso próprio em vez do erro cru, porque o
+// chamado está certo e o usuário não fez nada errado. Quando o endpoint existir, este
+// caminho simplesmente deixa de ser alcançado.
+const AVISO_SEM_BACKEND =
+  "O histórico ainda não está disponível: o servidor não expõe este recurso. " +
+  "Aguardando a implementação de /chamados/{id}/historico no backend.";
+
 const ICONE_POR_TIPO = {
   ABERTURA: Ticket,
   ATRIBUICAO: UserCheck,
@@ -174,7 +182,7 @@ function EventoDaTrilha({ evento, ultimo }) {
  * @param {number} [props.recarregarEm]   muda de valor para forçar releitura da trilha
  */
 export function HistoricoChamado({ chamadoId, avisoLeitura, recarregarEm }) {
-  const { eventos, loading, error, recarregar } = useHistoricoChamado(chamadoId);
+  const { eventos, loading, error, semBackend, recarregar } = useHistoricoChamado(chamadoId);
 
   // Cada interação registrada gera evento no servidor, então a
   // tela avisa por `recarregarEm` que a trilha ficou velha. O ref guarda o último valor
@@ -201,9 +209,15 @@ export function HistoricoChamado({ chamadoId, avisoLeitura, recarregarEm }) {
 
       <ErrorBanner message={error} />
 
+      {semBackend && (
+        <p className="rounded-lg border border-warning/30 bg-warning-soft px-3 py-2 text-xs text-warning">
+          {AVISO_SEM_BACKEND}
+        </p>
+      )}
+
       {loading ? (
         <Spinner size={16} />
-      ) : eventos.length === 0 ? (
+      ) : semBackend ? null : eventos.length === 0 ? (
         <p className="text-xs text-text-faint">
           Nenhum registro ainda. Cada ação no chamado entra aqui automaticamente.
         </p>
@@ -215,7 +229,9 @@ export function HistoricoChamado({ chamadoId, avisoLeitura, recarregarEm }) {
         </ol>
       )}
 
-      {avisoLeitura && (
+      {/* Sem o endpoint, prometer que "novos registros entram por Nova Interação"
+          seria mentira — o aviso de leitura só faz sentido quando a trilha existe. */}
+      {avisoLeitura && !semBackend && (
         <p className="rounded-lg border border-border-soft bg-surface-2 px-3 py-2 text-xs text-text-faint">
           {avisoLeitura}
         </p>
