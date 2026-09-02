@@ -69,6 +69,24 @@ export function FilaFiltros({ filtros, onChange, onLimpar }) {
         )}
       </div>
 
+      {/* Recortes derivados (não são campo do chamado): SLA estourado e dia de
+          abertura. Aparecem como chips para o filtro que veio do dashboard ficar
+          visível e removível, em vez de um estado invisível na URL. */}
+      <div className="mb-4 flex flex-wrap items-center gap-1.5">
+        <p className="mr-1 text-xs font-semibold tracking-wider text-text-faint uppercase">Recorte</p>
+        <Chip
+          ativo={filtros.atrasados}
+          onClick={() => onChange({ ...filtros, atrasados: !filtros.atrasados })}
+        >
+          SLA estourado
+        </Chip>
+        {filtros.dia && (
+          <Chip ativo onClick={() => onChange({ ...filtros, dia: null })}>
+            Abertos em {filtros.dia}
+          </Chip>
+        )}
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <GrupoChips titulo="Status" dicionario={StatusChamado} selecionados={filtros.status} onToggle={toggle("status")} />
         <GrupoChips titulo="Prioridade" dicionario={Urgencia} selecionados={filtros.urgencias} onToggle={toggle("urgencias")} />

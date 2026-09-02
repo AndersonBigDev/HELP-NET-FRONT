@@ -51,14 +51,16 @@ export function AppLayout() {
           {isAtendimento && (
             <>
               <SecaoNav titulo="Atendimento" />
+              {/* Dashboard primeiro: é a tela inicial de quem atende e a porta de
+                  entrada para as filas, já que cada indicador leva ao seu recorte. */}
+              <NavLink to="/atendimento/dashboard" className={linkClass}>
+                <BarChart3 size={18} />
+                Dashboard
+              </NavLink>
               {/* `end` para o link não continuar ativo dentro do detalhe do chamado. */}
               <NavLink to="/atendimento" end className={linkClass}>
                 <Inbox size={18} />
                 Filas de Atendimento
-              </NavLink>
-              <NavLink to="/atendimento/dashboard" className={linkClass}>
-                <BarChart3 size={18} />
-                Dashboard
               </NavLink>
 
               <SecaoNav titulo="Administração" />
