@@ -14,28 +14,6 @@ O projeto vive em **dois repositórios**:
 
 ---
 
-## Estado atual — leia antes de tentar rodar
-
-> **O backend na branch `main` não inicia.** A aplicação compila, mas falha no boot do
-> contexto Spring com `Parameter 2 of constructor in SecurityConfig required a bean of
-> type 'com.fasterxml.jackson.databind.ObjectMapper'`. O projeto está no Spring Boot 4,
-> que migrou para o Jackson 3 (`tools.jackson`), e o `SecurityConfig` importa o
-> `ObjectMapper` do Jackson 2. A correção é trocar o import, e é responsabilidade da
-> equipe de backend.
-
-Além disso, em **bancos que já rodavam versões anteriores** existem duas colunas órfãs
-`NOT NULL` (`tab_usuarios.cadastro_completo` e `tab_anexos.caminho_arquivo`) que fazem
-todo INSERT de usuário e de anexo falhar. Banco criado do zero não tem o problema.
-
-O levantamento completo de pendências do backend, com prioridades, scripts de migração e
-o contrato dos endpoints que faltam, está em
-[`CONTRATO_BACKEND.md`](CONTRATO_BACKEND.md) e no relatório enviado à equipe.
-
-**O front compila e roda normalmente.** Duas telas (conversa do chamado e troca de senha)
-dependem de endpoints que o backend ainda não implementou e mostram erro até lá.
-
----
-
 ## Como rodar
 
 ### Pré-requisitos
@@ -166,15 +144,26 @@ do prazo, e em vermelho quando estoura. Chamado resolvido ou fechado para de con
 
 ```
 ABERTO ──► EM_ANDAMENTO ──► RESOLVIDO ──► FECHADO
-   │             │
-   └──────► ESCALONADO
+                ▲ │              │            │
+                │ ▼              │            │
+              PAUSADO            │            │
+                ▲                │            │
+                └── reabertura ──┴────────────┘
+
+ESCALONADO parte de qualquer estado ativo: sobe o nível exigido e o chamado
+continua em atendimento.
 ```
 
 - `ABERTO` — na fila, sem responsável
 - `EM_ANDAMENTO` — algum atendente assumiu
+- `PAUSADO` — atendimento parado por dependência externa; exige responsável e motivo
+  escrito, e o relógio do SLA para enquanto dura
 - `ESCALONADO` — passou para um nível superior
 - `RESOLVIDO` — solução aplicada, aguardando avaliação do solicitante
 - `FECHADO` — encerrado
+
+Reabrir um chamado `RESOLVIDO` ou `FECHADO` exige justificativa e devolve ele ao
+atendimento. Toda mudança de estado grava um evento na trilha do chamado.
 
 ### Escalonamento
 
@@ -183,11 +172,25 @@ Quando um atendente não consegue resolver, escalona para um nível acima. O esc
 obrigatória, e cada movimento gera um registro em `EscalonamentoLog` com nível anterior,
 nível novo, autor, justificativa e data.
 
+### Trilha do atendimento
+
+Cada ação sobre o chamado — abertura, atribuição, pausa, retomada, escalonamento,
+resolução, reabertura e avaliação — grava um evento em `tab_chamado_historico`, dentro da
+mesma transação da ação. O atendente também pode registrar uma anotação avulsa, que entra
+na trilha sem mexer no status.
+
+A trilha é append-only: não existe rota de edição nem de exclusão. Cada evento guarda quem
+era o responsável **naquele instante**, e não o responsável atual — é o que permite ler a
+história de um chamado que trocou de atendente sem atribuir tudo ao último deles. O
+solicitante acompanha a mesma trilha em modo leitura.
+
 ---
 
 ## Regras de negócio
 
-- **Limite de 3 chamados ativos** por usuário comum (contando `ABERTO` e `EM_ANDAMENTO`).
+- **Limite de 3 chamados ativos** por usuário comum. Conta todo chamado que ainda não
+  encerrou — `ABERTO`, `EM_ANDAMENTO`, `PAUSADO` e `ESCALONADO` —, e os dois lados
+  derivam essa lista do enum, para não divergirem quando um status novo aparecer.
   Atendentes e admins não têm esse limite.
 - **Domínio restrito**: só e-mails `@helpdesk.com` são aceitos no cadastro.
 - **Chamado em nome de terceiro**: apenas atendentes e admins podem abrir um chamado
@@ -209,6 +212,11 @@ nível novo, autor, justificativa e data.
 Toda rota exige `Authorization: Bearer <token>`, exceto o login. O token é HS256 e vale
 24 horas; carrega `sub` (e-mail), `id`, `nome` e `perfil`.
 
+> A claim **`id`** não é decorativa. O front a usa para o usuário reconhecer os próprios
+> chamados em "Meus Chamados" e para saber se já é o responsável de um chamado. Se ela
+> sair do token, a listagem do perfil USUARIO fica vazia, sem erro nenhum na tela. A
+> alternativa, nesse caso, seria o front passar a chamar `GET /usuarios/me`.
+
 ### Autenticação
 
 | Método | Rota | Quem |
@@ -224,6 +232,8 @@ Toda rota exige `Authorization: Bearer <token>`, exceto o login. O token é HS25
 | `POST` | `/usuarios` | ADMIN · ATENDENTE |
 | `PUT` | `/usuarios/{id}` | ADMIN · ATENDENTE |
 | `DELETE` | `/usuarios/{id}` | ADMIN · ATENDENTE |
+| `PATCH` | `/usuarios/me/senha` | qualquer autenticado · exige a senha atual |
+| `PATCH` | `/usuarios/{id}/senha` | ADMIN · reset de terceiro |
 
 ### Chamados
 
@@ -235,11 +245,21 @@ Toda rota exige `Authorization: Bearer <token>`, exceto o login. O token é HS25
 | `GET` | `/chamados/fila` | ADMIN · ATENDENTE |
 | `POST` | `/chamados/{id}/escalonar` | ADMIN · ATENDENTE |
 | `PATCH` | `/chamados/{id}/assumir` | ADMIN · ATENDENTE |
-| `PATCH` | `/chamados/{id}/status?novoStatus=` | ADMIN · ATENDENTE |
+| `PATCH` | `/chamados/{id}/status` | ADMIN · ATENDENTE · corpo JSON |
 | `PATCH` | `/chamados/{id}/avaliar` | solicitante original |
+| `GET` | `/chamados/{id}/historico` | autenticado · sujeito à regra de nível |
+| `POST` | `/chamados/{id}/historico` | ADMIN · ATENDENTE · anotação avulsa |
+| `GET` | `/chamados/{id}/mensagens` | autenticado · sujeito à regra de nível |
+| `POST` | `/chamados/{id}/mensagens` | autenticado · bloqueado em chamado FECHADO |
 
 `GET /chamados` aceita os filtros `status`, `urgencia`, `setor`, `nivelExigido`,
 `solicitanteId` e `responsavelId`, além de `page`, `size` e `sort`.
+
+`PATCH /chamados/{id}/status` recebe `{ status, observacao?, descricaoResolucao?,
+justificativaReabertura? }`. A `observacao` é o relato do atendente e vira a descrição do
+evento na trilha; ela é **obrigatória ao pausar**, porque uma pausa sem motivo não conta
+nada a quem ler o histórico depois. Resolver ou fechar pela primeira vez exige
+`descricaoResolucao`; reabrir exige `justificativaReabertura`.
 
 ### Anexos, equipamentos e logs
 
@@ -253,17 +273,6 @@ Toda rota exige `Authorization: Bearer <token>`, exceto o login. O token é HS25
 | `POST` `PUT` `DELETE` | `/equipamentos[/{id}]` | ADMIN · ATENDENTE, com trava por nível |
 | `GET` | `/escalonamentos` | ADMIN · ATENDENTE |
 | `GET` | `/escalonamentos/chamado/{id}` | ADMIN · ATENDENTE |
-
-### Ainda não implementadas no backend
-
-O front já consome estas rotas; enquanto não existirem, as telas correspondentes
-mostram erro:
-
-| Método | Rota | Tela |
-|---|---|---|
-| `GET` `POST` | `/chamados/{id}/mensagens` | conversa do chamado |
-| `PATCH` | `/usuarios/me/senha` | alterar minha senha |
-| `PATCH` | `/usuarios/{id}/senha` | redefinir senha (ADMIN) |
 
 ### Formato de erro
 
@@ -291,13 +300,18 @@ helpnet/src/
 ├── auth/           AuthContext (sessão), ProtectedRoute, RoleRoute, leitura do JWT
 ├── components/
 │   ├── layout/     AppLayout — menu lateral fixo presente em toda tela pós-login
-│   └── ui/         Button, Card, Badge, Modal, Field, Feedback, SlaTag, SeletorTema
-├── domain/         enums.js, sla.js, equipamentos.js — regras espelhadas do backend
-├── hooks/          useChamados, useUsuarios, useEquipamentos
+│   └── ui/         Badge, Button, Card, DataField, Feedback, Field, Modal,
+│                   SeletorTema, SlaTag
+├── domain/         regras espelhadas do backend: enums, sla, avaliacao,
+│                   interacoes, equipamentos
+├── hooks/          useChamado, useChamados, useHistoricoChamado, useUsuarios,
+│                   useEquipamentos
 ├── pages/
 │   ├── Login/
-│   ├── Chamados/       Meus Chamados, Novo Chamado, Anexos, Conversa
-│   ├── Atendimento/    Filas, Detalhe, Dashboard, Escalonar
+│   ├── Chamados/       Meus Chamados, Novo Chamado, Anexos, Conversa,
+│   │                   Histórico, Avaliação
+│   ├── Atendimento/    Filas, Detalhe, Dashboard, Ações e Nova Interação,
+│   │                   Painel de atendimento
 │   ├── Equipamentos/
 │   ├── Usuarios/
 │   └── Perfil/         Alterar senha
@@ -342,8 +356,6 @@ Vale seguir estas quatro ao mexer no código:
 - **Filtros no cliente.** O `GET /chamados` já aceita filtros no servidor, mas o front
   ainda busca uma página de 200 registros e recorta no navegador. Migrar isso é a próxima
   melhoria óbvia de performance.
-- **Sem ação de assumir, alterar status ou avaliar na interface.** Os três endpoints
-  existem no backend e não têm botão correspondente na tela.
 - **Sem "esqueci minha senha".** A recuperação depende de envio de e-mail, que não está
   configurado. Hoje a saída é um ADMIN redefinir a senha da pessoa.
 - **Sem busca por protocolo** na lista de chamados.

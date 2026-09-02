@@ -7,17 +7,13 @@ import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { DataField } from "../../components/ui/DataField";
 import { EmptyState, ErrorBanner, Spinner } from "../../components/ui/Feedback";
-import { Categoria, StatusChamado, Urgencia } from "../../domain/enums";
+import { Categoria, STATUS_ATIVOS, StatusChamado, Urgencia } from "../../domain/enums";
 import { ChamadoAnexos } from "./ChamadoAnexos";
 import { avaliacaoVisivel } from "../../domain/avaliacao";
 import { ChamadoAvaliacao } from "./ChamadoAvaliacao";
 import { ChamadoMensagens } from "./ChamadoMensagens";
 import { HistoricoChamado } from "./HistoricoChamado";
 import { NovoChamadoModal } from "./NovoChamadoModal";
-
-// Espelha o limite do backend (RN: 3 chamados ativos por solicitante). PAUSADO entra
-// na conta porque o `ChamadoService.criarChamado` também o considera ativo.
-const STATUS_ATIVOS = ["ABERTO", "EM_ANDAMENTO", "PAUSADO"];
 
 // O JWT carrega o id do usuário (claim `id`), então a comparação é exata para todos
 // os perfis. Antes, o perfil USUARIO caía num casamento por nome — que confunde
