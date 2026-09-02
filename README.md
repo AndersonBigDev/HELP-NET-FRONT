@@ -14,20 +14,6 @@ O projeto vive em **dois repositórios**:
 
 ---
 
-## Estado atual
-
-Backend e front sobem e conversam entre si. As pendências que esta seção listava — o
-backend não iniciar por causa do `ObjectMapper`, as colunas órfãs no banco, e as telas de
-conversa e de troca de senha sem endpoint — foram todas resolvidas.
-
-Uma premissa segue valendo, e vale conhecer antes de mexer na autenticação: **o JWT
-carrega a claim `id`** (`JwtService.gerarToken`). O front usa esse id para o usuário
-reconhecer os próprios chamados em "Meus Chamados" e para saber se já é o responsável de
-um chamado. Se a claim sair do token, a listagem do perfil USUARIO fica vazia — a
-alternativa, nesse caso, seria o front passar a chamar `GET /usuarios/me`.
-
----
-
 ## Como rodar
 
 ### Pré-requisitos
@@ -179,6 +165,13 @@ continua em atendimento.
 Reabrir um chamado `RESOLVIDO` ou `FECHADO` exige justificativa e devolve ele ao
 atendimento. Toda mudança de estado grava um evento na trilha do chamado.
 
+### Escalonamento
+
+Quando um atendente não consegue resolver, escalona para um nível acima. O escalonamento
+**só sobe** — o backend rejeita qualquer tentativa de baixar o nível. Uma justificativa é
+obrigatória, e cada movimento gera um registro em `EscalonamentoLog` com nível anterior,
+nível novo, autor, justificativa e data.
+
 ### Trilha do atendimento
 
 Cada ação sobre o chamado — abertura, atribuição, pausa, retomada, escalonamento,
@@ -191,18 +184,13 @@ era o responsável **naquele instante**, e não o responsável atual — é o qu
 história de um chamado que trocou de atendente sem atribuir tudo ao último deles. O
 solicitante acompanha a mesma trilha em modo leitura.
 
-### Escalonamento
-
-Quando um atendente não consegue resolver, escalona para um nível acima. O escalonamento
-**só sobe** — o backend rejeita qualquer tentativa de baixar o nível. Uma justificativa é
-obrigatória, e cada movimento gera um registro em `EscalonamentoLog` com nível anterior,
-nível novo, autor, justificativa e data.
-
 ---
 
 ## Regras de negócio
 
-- **Limite de 3 chamados ativos** por usuário comum (contando `ABERTO` e `EM_ANDAMENTO`).
+- **Limite de 3 chamados ativos** por usuário comum. Conta todo chamado que ainda não
+  encerrou — `ABERTO`, `EM_ANDAMENTO`, `PAUSADO` e `ESCALONADO` —, e os dois lados
+  derivam essa lista do enum, para não divergirem quando um status novo aparecer.
   Atendentes e admins não têm esse limite.
 - **Domínio restrito**: só e-mails `@helpdesk.com` são aceitos no cadastro.
 - **Chamado em nome de terceiro**: apenas atendentes e admins podem abrir um chamado
@@ -223,6 +211,11 @@ nível novo, autor, justificativa e data.
 
 Toda rota exige `Authorization: Bearer <token>`, exceto o login. O token é HS256 e vale
 24 horas; carrega `sub` (e-mail), `id`, `nome` e `perfil`.
+
+> A claim **`id`** não é decorativa. O front a usa para o usuário reconhecer os próprios
+> chamados em "Meus Chamados" e para saber se já é o responsável de um chamado. Se ela
+> sair do token, a listagem do perfil USUARIO fica vazia, sem erro nenhum na tela. A
+> alternativa, nesse caso, seria o front passar a chamar `GET /usuarios/me`.
 
 ### Autenticação
 
@@ -307,13 +300,18 @@ helpnet/src/
 ├── auth/           AuthContext (sessão), ProtectedRoute, RoleRoute, leitura do JWT
 ├── components/
 │   ├── layout/     AppLayout — menu lateral fixo presente em toda tela pós-login
-│   └── ui/         Button, Card, Badge, Modal, Field, Feedback, SlaTag, SeletorTema
-├── domain/         enums.js, sla.js, equipamentos.js — regras espelhadas do backend
-├── hooks/          useChamados, useUsuarios, useEquipamentos
+│   └── ui/         Badge, Button, Card, DataField, Feedback, Field, Modal,
+│                   SeletorTema, SlaTag
+├── domain/         regras espelhadas do backend: enums, sla, avaliacao,
+│                   interacoes, equipamentos
+├── hooks/          useChamado, useChamados, useHistoricoChamado, useUsuarios,
+│                   useEquipamentos
 ├── pages/
 │   ├── Login/
-│   ├── Chamados/       Meus Chamados, Novo Chamado, Anexos, Conversa
-│   ├── Atendimento/    Filas, Detalhe, Dashboard, Escalonar
+│   ├── Chamados/       Meus Chamados, Novo Chamado, Anexos, Conversa,
+│   │                   Histórico, Avaliação
+│   ├── Atendimento/    Filas, Detalhe, Dashboard, Ações e Nova Interação,
+│   │                   Painel de atendimento
 │   ├── Equipamentos/
 │   ├── Usuarios/
 │   └── Perfil/         Alterar senha
