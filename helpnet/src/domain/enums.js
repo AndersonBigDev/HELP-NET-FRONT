@@ -90,6 +90,14 @@ export function statusEmAtendimento(status) {
   return STATUS_EM_ATENDIMENTO.includes(status);
 }
 
+// Ocupam uma das três vagas do solicitante: todo status que não encerra o chamado.
+// Espelha `STATUS_ATIVOS` no ChamadoService, que deriva a lista do enum pela mesma
+// regra — os dois lados precisam contar igual, senão a tela desabilita o botão de
+// abrir chamado numa hora em que o servidor ainda aceitaria, ou o contrário.
+export const STATUS_ATIVOS = Object.values(StatusChamado)
+  .map((s) => s.value)
+  .filter((valor) => !STATUS_ENCERRADOS.includes(valor));
+
 // Trilha de histórico — espelha o enum TipoEventoChamado do backend.
 export const TipoEventoChamado = {
   ABERTURA: { value: "ABERTURA", label: "Chamado aberto", color: "info" },
