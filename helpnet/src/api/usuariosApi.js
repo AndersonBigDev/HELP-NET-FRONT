@@ -16,8 +16,8 @@ export const usuariosApi = {
   // ===========================================================================
   // TROCA DE SENHA (RF03) — CONTRATO ESPERADO DO BACKEND
   //
-  // >>> BACKEND: nenhuma das duas rotas existe ainda. A UI que as consome está
-  // >>> em src/pages/Perfil/AlterarSenhaModal.jsx
+  // Ambas as rotas existem no backend (UsuarioController). A UI que as consome está
+  // em src/pages/Perfil/AlterarSenhaModal.jsx
   //
   // PATCH /usuarios/me/senha        — qualquer autenticado
   //   corpo:    { "senhaAtual": "...", "novaSenha": "..." }

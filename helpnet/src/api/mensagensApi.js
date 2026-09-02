@@ -7,8 +7,9 @@ import { apiClient } from "./client";
 // >>> envia e o que espera receber. A UI que consome isso está em
 // >>> src/pages/Chamados/ChamadoMensagens.jsx
 //
-// Nenhuma destas rotas existe no backend ainda. Enquanto não existirem, o
-// componente detecta o 404 e exibe um aviso em vez de um erro genérico.
+// As duas rotas existem no backend (MensagemController). O componente ainda trata o
+// 404 com um aviso próprio: é a rede de segurança para quem estiver rodando um build
+// antigo do servidor, e custa três linhas.
 //
 // -----------------------------------------------------------------------------
 // GET /chamados/{chamadoId}/mensagens
