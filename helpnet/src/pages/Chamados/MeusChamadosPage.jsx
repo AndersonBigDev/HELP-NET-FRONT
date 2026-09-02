@@ -9,6 +9,8 @@ import { DataField } from "../../components/ui/DataField";
 import { EmptyState, ErrorBanner, Spinner } from "../../components/ui/Feedback";
 import { Categoria, StatusChamado, Urgencia } from "../../domain/enums";
 import { ChamadoAnexos } from "./ChamadoAnexos";
+import { avaliacaoVisivel } from "../../domain/avaliacao";
+import { ChamadoAvaliacao } from "./ChamadoAvaliacao";
 import { ChamadoMensagens } from "./ChamadoMensagens";
 import { HistoricoChamado } from "./HistoricoChamado";
 import { NovoChamadoModal } from "./NovoChamadoModal";
@@ -36,6 +38,9 @@ export function MeusChamadosPage() {
   const [error, setError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [expandido, setExpandido] = useState(null);
+  // A trilha vive no servidor, entao avaliar a deixa velha: o evento "Chamado avaliado"
+  // acabou de nascer la e o componente ja tinha carregado. Mesmo mecanismo do detalhe.
+  const [versaoTrilha, setVersaoTrilha] = useState(0);
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -58,6 +63,13 @@ export function MeusChamadosPage() {
   }, [carregar]);
 
   const chamados = useMemo(() => todos.filter((c) => ehMeuChamado(c, user)), [todos, user]);
+
+  // O PATCH de avaliar devolve o chamado ja atualizado, entao trocamos so ele na lista
+  // em vez de recarregar as 200 linhas -- e recarregar fecharia o card expandido.
+  const aplicarChamado = useCallback((atualizado) => {
+    setTodos((lista) => lista.map((c) => (c.id === atualizado.id ? atualizado : c)));
+    setVersaoTrilha((v) => v + 1);
+  }, []);
 
   const ativos = chamados.filter((c) => STATUS_ATIVOS.includes(c.status)).length;
   const limiteAtingido = ativos >= 3;
@@ -140,6 +152,16 @@ export function MeusChamadosPage() {
                       </p>
                     )}
 
+                    {/* RN08. Fica acima da descricao de proposito: quando o chamado
+                        acabou de ser resolvido, avaliar e a unica coisa que sobrou para
+                        o solicitante fazer -- enterrar isso depois do historico e da
+                        conversa seria esconder a acao atras de duas rolagens. */}
+                    {avaliacaoVisivel(c) && (
+                      <div className="mb-4 rounded-lg border border-border bg-surface-2 px-4 py-3">
+                        <ChamadoAvaliacao chamado={c} onAvaliado={aplicarChamado} />
+                      </div>
+                    )}
+
                     <p className="mb-4 text-sm text-text-muted">{c.descricao}</p>
                     <ChamadoAnexos chamadoId={c.id} />
 
@@ -148,6 +170,7 @@ export function MeusChamadosPage() {
                     <div className="mt-5 border-t border-border-soft pt-4">
                       <HistoricoChamado
                         chamadoId={c.id}
+                        recarregarEm={versaoTrilha}
                         avisoLeitura="Registro mantido pelo suporte. Para falar com o atendente, use a conversa abaixo."
                       />
                     </div>
