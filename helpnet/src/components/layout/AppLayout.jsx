@@ -26,13 +26,19 @@ export function AppLayout() {
 
   return (
     <div className="flex min-h-svh bg-canvas">
-      <aside className="flex w-64 shrink-0 flex-col border-r border-border-soft bg-surface px-3 py-4">
+      {/* `h-svh` + `sticky`: sem altura propria o aside esticava junto com a pagina,
+          e o rodape (aparencia, usuario, sair) ia parar no fim do DOCUMENTO -- em tela
+          com conteudo longo so dava para alcanca-lo rolando ate o fim. Agora a barra
+          ocupa exatamente a altura da janela e fica onde esta; quem rola e o conteudo. */}
+      <aside className="sticky top-0 flex h-svh w-64 shrink-0 flex-col border-r border-border-soft bg-surface px-3 py-4">
         <div className="mb-6 flex items-center gap-2 px-2">
           <LifeBuoy className="text-accent" size={22} />
           <span className="text-base font-semibold text-text">HelpNet</span>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-0.5">
+        {/* `min-h-0` deixa o nav encolher abaixo do conteudo e rolar sozinho, em vez de
+            empurrar o rodape para fora da barra. */}
+        <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
           {!isAtendimento && (
             <>
               <NavLink to="/meus-chamados" className={linkClass}>
@@ -80,10 +86,13 @@ export function AppLayout() {
           )}
         </nav>
 
-        <div className="flex flex-col gap-3 border-t border-border-soft pt-3">
+        {/* Uma divisoria so. O rodape inteiro e um bloco: aparencia, quem esta logado e
+            as duas acoes de conta. Dois traços separavam coisas que ninguem lê como
+            seções diferentes, e cada linha a mais aqui e uma linha a menos para o menu. */}
+        <div className="mt-3 flex shrink-0 flex-col gap-2 border-t border-border-soft pt-3">
           <SeletorTema />
 
-          <div className="border-t border-border-soft pt-3">
+          <div>
             <div className="mb-2 px-2">
               <p className="truncate text-sm font-medium text-text">{user?.nome}</p>
               <p className="truncate text-xs text-text-faint">{user?.email}</p>

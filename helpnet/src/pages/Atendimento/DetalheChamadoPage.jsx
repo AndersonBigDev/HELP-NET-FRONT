@@ -8,11 +8,13 @@ import { Card } from "../../components/ui/Card";
 import { DataField } from "../../components/ui/DataField";
 import { EmptyState, ErrorBanner, Spinner } from "../../components/ui/Feedback";
 import { SlaTag } from "../../components/ui/SlaTag";
+import { avaliacaoVisivel } from "../../domain/avaliacao";
 import { Categoria, NivelAtendente, Setor, StatusChamado, Urgencia } from "../../domain/enums";
 import { calcularSla } from "../../domain/sla";
 import { useChamado } from "../../hooks/useChamado";
 import { useUsuarios } from "../../hooks/useUsuarios";
 import { ChamadoAnexos } from "../Chamados/ChamadoAnexos";
+import { ChamadoAvaliacao } from "../Chamados/ChamadoAvaliacao";
 import { ChamadoMensagens } from "../Chamados/ChamadoMensagens";
 import { HistoricoChamado } from "../Chamados/HistoricoChamado";
 import { NovoChamadoModal } from "../Chamados/NovoChamadoModal";
@@ -191,6 +193,15 @@ export function DetalheChamadoPage() {
               </div>
             )}
           </Card>
+
+          {/* O atendente le a avaliacao, nao a preenche: quem avalia e o solicitante,
+              e o servidor recusa qualquer outro. Entra depois da resolucao porque e a
+              resposta do solicitante a ela. */}
+          {avaliacaoVisivel(chamado) && (
+            <Card>
+              <ChamadoAvaliacao chamado={chamado} somenteLeitura />
+            </Card>
+          )}
 
           <Card>
             <HistoricoChamado

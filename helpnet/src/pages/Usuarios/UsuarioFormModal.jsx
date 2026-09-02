@@ -56,6 +56,8 @@ export function UsuarioFormModal({ open, onClose, usuario, onSubmit }) {
           email: form.email,
           senha: form.senha,
           perfil: form.perfil,
+          cargo: form.cargo,
+          setor: form.setor,
           nivelAntendente: form.perfil === "ATENDENTE" ? form.nivelAntendente || null : null,
         });
       }
@@ -95,17 +97,21 @@ export function UsuarioFormModal({ open, onClose, usuario, onSubmit }) {
           />
         )}
 
-        {isEdit && <Input id="cargo" label="Cargo" value={form.cargo} onChange={set("cargo")} />}
-        {isEdit && (
-          <Select
-            id="setor"
-            label="Setor"
-            placeholder="Sem setor"
-            options={optionsOf(Setor)}
-            value={form.setor}
-            onChange={set("setor")}
-          />
-        )}
+        {/* Obrigatórios na criação (`@NotBlank cargo` / `@NotNull setor` no UserCreateDTO)
+            e opcionais na edição (o UsuarioUpdateDTO aceita nulo) — daí o `required`
+            condicional. Antes os dois campos só existiam no modo edição, então o POST saía
+            sem eles e todo cadastro novo morria em "Setor é obrigatório", sem ter onde
+            preencher o setor. */}
+        <Input id="cargo" label="Cargo" required={!isEdit} value={form.cargo} onChange={set("cargo")} />
+        <Select
+          id="setor"
+          label="Setor"
+          required={!isEdit}
+          placeholder={isEdit ? "Sem setor" : "Selecione o setor"}
+          options={optionsOf(Setor)}
+          value={form.setor}
+          onChange={set("setor")}
+        />
 
         {form.perfil === "ATENDENTE" && (
           <Select

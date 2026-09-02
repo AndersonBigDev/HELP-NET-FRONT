@@ -80,9 +80,20 @@ export function FilaFiltros({ filtros, onChange, onLimpar }) {
         >
           SLA estourado
         </Chip>
+        <Chip
+          ativo={filtros.avaliacaoNegativa}
+          onClick={() => onChange({ ...filtros, avaliacaoNegativa: !filtros.avaliacaoNegativa })}
+        >
+          Avaliação negativa
+        </Chip>
         {filtros.dia && (
           <Chip ativo onClick={() => onChange({ ...filtros, dia: null })}>
             Abertos em {filtros.dia}
+          </Chip>
+        )}
+        {filtros.diaEncerramento && (
+          <Chip ativo onClick={() => onChange({ ...filtros, diaEncerramento: null })}>
+            Encerrados em {filtros.diaEncerramento}
           </Chip>
         )}
       </div>

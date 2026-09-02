@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Card } from "../../components/ui/Card";
 import { EmptyState, ErrorBanner, Spinner } from "../../components/ui/Feedback";
+import { avaliacaoNegativa } from "../../domain/avaliacao";
 import { Setor, StatusChamado } from "../../domain/enums";
 import { calcularSla } from "../../domain/sla";
 import { useChamados } from "../../hooks/useChamados";
@@ -31,6 +32,11 @@ function calcularMetricas(chamados) {
   const escalonados = chamados.filter((c) => c.status === "ESCALONADO").length;
   const pausados = chamados.filter((c) => c.status === "PAUSADO").length;
 
+  // RN08. `avaliados` acompanha `negativas` porque o numero sozinho nao se sustenta:
+  // "2 negativas" pode ser 2 de 3 atendimentos ou 2 de 200, e sao operacoes opostas.
+  const avaliados = chamados.filter((c) => c.notaAvaliacao != null).length;
+  const negativas = chamados.filter(avaliacaoNegativa).length;
+
   // `value` acompanha cada série para o clique saber qual recorte abrir — sem ele
   // sobraria casar pelo rótulo traduzido, que é frágil.
   const porStatus = Object.values(StatusChamado).map((s) => ({
@@ -49,8 +55,17 @@ function calcularMetricas(chamados) {
     .filter((d) => d.total > 0)
     .sort((a, b) => b.total - a.total);
 
-  // Últimos 7 dias, incluindo os dias sem abertura (senão a linha mente sobre o ritmo).
   const hoje = new Date();
+  const chaveHoje = chaveDoDia(hoje);
+
+  // Encerrados hoje: o que a operação entregou no dia. Conta pela `dataFechamento`, que
+  // o servidor grava ao resolver ou fechar e limpa na reabertura -- um chamado reaberto
+  // deixa de contar como entregue, que é exatamente o comportamento desejado.
+  const encerradosHoje = chamados.filter(
+    (c) => c.dataFechamento && chaveDoDia(c.dataFechamento) === chaveHoje,
+  ).length;
+
+  // Últimos 7 dias, incluindo os dias sem abertura (senão a linha mente sobre o ritmo).
   const porDia = Array.from({ length: DIAS_NA_SERIE }, (_, i) => {
     const dia = new Date(hoje);
     dia.setDate(hoje.getDate() - (DIAS_NA_SERIE - 1 - i));
@@ -62,7 +77,12 @@ function calcularMetricas(chamados) {
     };
   });
 
-  return { abertos, emAndamento, escalonados, pausados, resolvidos, atrasados, porStatus, porSetor, porDia };
+  return {
+    abertos, emAndamento, escalonados, pausados, resolvidos, atrasados,
+    avaliados, negativas,
+    encerradosHoje, chaveHoje,
+    porStatus, porSetor, porDia,
+  };
 }
 
 // Escalonado e pausado só aparecem quando existem — a nota não pode virar uma linha
@@ -184,22 +204,27 @@ export function DashboardPage() {
               nota="SLA calculado pela urgência"
               para={linkDaFila({ atrasados: true })}
             />
-            {/* RN08: sem fonte de dado no backend — não existe campo de avaliação, e o
-                ChamadoResponseDTO não devolve dataFechamento. Mostramos "—" em vez de
-                número inventado, mesma convenção do telefone do solicitante. */}
+            {/* RN08: nota 1 ou 2 — ver NOTA_NEGATIVA_MAXIMA em domain/avaliacao.js.
+                Quando ninguém avaliou ainda, o card diz isso em vez de exibir um zero
+                que se leria como "nenhuma reclamação". */}
             <IndicadorCard
               icon={ThumbsDown}
               label="Avaliação negativa"
-              valor={SEM_DADO}
-              cor="faint"
-              nota="Aguardando campo de avaliação no backend"
+              valor={m.avaliados === 0 ? SEM_DADO : m.negativas}
+              cor={m.negativas > 0 ? "danger" : m.avaliados === 0 ? "faint" : "text"}
+              nota={
+                m.avaliados === 0
+                  ? "Nenhum chamado avaliado ainda"
+                  : `de ${m.avaliados} ${m.avaliados === 1 ? "chamado avaliado" : "chamados avaliados"}`
+              }
+              para={linkDaFila({ avaliacaoNegativa: true })}
             />
             <IndicadorCard
               icon={Clock}
               label="Total atendido no dia"
-              valor={SEM_DADO}
-              cor="faint"
-              nota="Aguardando dataFechamento no backend"
+              valor={m.encerradosHoje}
+              nota="Resolvidos ou fechados hoje"
+              para={linkDaFila({ diaEncerramento: m.chaveHoje })}
             />
           </div>
 

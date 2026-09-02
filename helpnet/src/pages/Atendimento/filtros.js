@@ -1,3 +1,4 @@
+import { avaliacaoNegativa } from "../../domain/avaliacao";
 import { calcularSla } from "../../domain/sla";
 
 // RF10/RF11 — todo o recorte da fila acontece no client, porque o `GET /chamados`
@@ -13,10 +14,16 @@ export const FILTROS_VAZIOS = {
   setores: [],
   niveis: [],
   urgencias: [],
-  // Recortes que o dashboard usa e que não são campo do chamado: SLA estourado e
-  // data de abertura. Ambos derivados, por isso não cabiam nas listas acima.
+  // Recortes que o dashboard usa e que não são campo do chamado: SLA estourado, data
+  // de abertura e avaliação negativa. Todos derivados, por isso não cabiam nas listas
+  // acima.
   atrasados: false,
   dia: null,
+  avaliacaoNegativa: false,
+  // Dia de ENCERRAMENTO, separado de `dia` (que é o de abertura). São perguntas
+  // diferentes: "quanto entrou hoje" e "quanto saíu hoje" raramente são o mesmo
+  // chamado, e juntar os dois num filtro só tornaria o recorte ilegível.
+  diaEncerramento: null,
 };
 
 // Chave de dia usada tanto no gráfico de aberturas quanto no filtro, para os dois
@@ -29,13 +36,21 @@ export function temFiltroAtivo(filtros) {
   return (
     DIMENSOES_LISTA.some((d) => filtros[d].length > 0) ||
     filtros.atrasados ||
-    filtros.dia != null
+    filtros.dia != null ||
+    filtros.avaliacaoNegativa ||
+    filtros.diaEncerramento != null
   );
 }
 
 export function contarFiltrosAtivos(filtros) {
   const listas = DIMENSOES_LISTA.reduce((total, d) => total + filtros[d].length, 0);
-  return listas + (filtros.atrasados ? 1 : 0) + (filtros.dia ? 1 : 0);
+  return (
+    listas +
+    (filtros.atrasados ? 1 : 0) +
+    (filtros.dia ? 1 : 0) +
+    (filtros.avaliacaoNegativa ? 1 : 0) +
+    (filtros.diaEncerramento ? 1 : 0)
+  );
 }
 
 export function alternarValor(lista, valor) {
@@ -56,7 +71,12 @@ export function aplicarFiltros(chamados, filtros) {
       casa(filtros.niveis, c.nivelExigido) &&
       casa(filtros.urgencias, c.urgencia) &&
       (!filtros.atrasados || calcularSla(c).atrasado) &&
-      (!filtros.dia || chaveDoDia(c.dataAbertura) === filtros.dia),
+      (!filtros.dia || chaveDoDia(c.dataAbertura) === filtros.dia) &&
+      (!filtros.avaliacaoNegativa || avaliacaoNegativa(c)) &&
+      // `dataFechamento` é nula em chamado aberto e volta a ser nula na reabertura,
+      // então a checagem de existência vem antes da comparação de dia.
+      (!filtros.diaEncerramento ||
+        (c.dataFechamento && chaveDoDia(c.dataFechamento) === filtros.diaEncerramento)),
   );
 }
 
@@ -89,6 +109,8 @@ export function filtrosDaUrl(searchParams) {
 
   filtros.atrasados = searchParams.get("atrasados") === "1";
   filtros.dia = searchParams.get("dia") || null;
+  filtros.avaliacaoNegativa = searchParams.get("negativas") === "1";
+  filtros.diaEncerramento = searchParams.get("encerradoEm") || null;
 
   return filtros;
 }
@@ -103,6 +125,8 @@ export function paramsDosFiltros(filtros) {
 
   if (filtros.atrasados) params.atrasados = "1";
   if (filtros.dia) params.dia = filtros.dia;
+  if (filtros.avaliacaoNegativa) params.negativas = "1";
+  if (filtros.diaEncerramento) params.encerradoEm = filtros.diaEncerramento;
 
   return params;
 }
@@ -124,6 +148,14 @@ export function tituloDaFila(filtros, rotuloDeStatus) {
 
   if (filtros.dia && !temOutroRecorte(filtros, "dia")) {
     return `Chamados abertos em ${filtros.dia}`;
+  }
+
+  if (filtros.avaliacaoNegativa && !temOutroRecorte(filtros, "avaliacaoNegativa")) {
+    return "Chamados com avaliação negativa";
+  }
+
+  if (filtros.diaEncerramento && !temOutroRecorte(filtros, "diaEncerramento")) {
+    return `Chamados encerrados em ${filtros.diaEncerramento}`;
   }
 
   if (filtros.status.length === 1 && !temOutroRecorte(filtros, "status")) {

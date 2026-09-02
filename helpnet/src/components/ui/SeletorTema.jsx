@@ -28,10 +28,14 @@ function Segmento({ ativo, onClick, titulo, children }) {
 }
 
 /**
- * Controle de aparência.
+ * Controle de aparência, sempre em uma linha só.
  *
- * @param {boolean} compacto  Só o modo claro/escuro, em ícones — para a tela de
- *                            login, onde a escolha de acento seria ruído.
+ * Os modos vão em ícone, sem o rótulo escrito: monitor, sol e lua são convenção
+ * conhecida, e é o que permite modo e acento caberem lado a lado no rodapé da barra
+ * lateral. O texto continua existindo para leitor de tela (`sr-only`) e no `title`.
+ *
+ * @param {boolean} compacto  Só o modo claro/escuro — para a tela de login, onde a
+ *                            escolha de acento seria ruído.
  */
 export function SeletorTema({ compacto = false }) {
   const { modo, acento, escolherModo, escolherAcento } = useTheme();
@@ -40,7 +44,12 @@ export function SeletorTema({ compacto = false }) {
     <div
       role="radiogroup"
       aria-label="Aparência"
-      className="flex gap-1 rounded-lg border border-border bg-surface-2 p-1"
+      // Na linha do rodape o grupo de modos toma a sobra: sem `flex-1` ele encolhe ate
+      // o conteudo e os tres icones ficam colados. As bolinhas nao encolhem (`shrink-0`),
+      // entao quem cede espaco e sempre o segmentado.
+      className={`flex gap-1 rounded-lg border border-border bg-surface-2 p-1 ${
+        compacto ? "" : "min-w-0 flex-1"
+      }`}
     >
       {MODOS.map((m) => {
         const Icone = ICONE_DO_MODO[m.value];
@@ -52,8 +61,7 @@ export function SeletorTema({ compacto = false }) {
             titulo={m.descricao}
           >
             <Icone size={14} />
-            {!compacto && m.label}
-            {compacto && <span className="sr-only">{m.label}</span>}
+            <span className="sr-only">{m.label}</span>
           </Segmento>
         );
       })}
@@ -63,14 +71,12 @@ export function SeletorTema({ compacto = false }) {
   if (compacto) return modos;
 
   return (
-    <div className="flex flex-col gap-2">
-      <p className="px-2 text-[11px] font-semibold tracking-wider text-text-faint uppercase">
-        Aparência
-      </p>
-
+    <div className="flex items-center gap-2">
       {modos}
 
-      <div role="radiogroup" aria-label="Cor de destaque" className="flex justify-between px-1">
+      {/* Bolinhas menores que o alternador de modo de proposito: o acento se escolhe uma
+          vez, claro/escuro se alterna o tempo todo. Quem usa mais leva mais area. */}
+      <div role="radiogroup" aria-label="Cor de destaque" className="flex shrink-0 gap-1.5">
         {ACENTOS.map((a) => {
           const ativo = acento === a.value;
           return (
@@ -86,11 +92,11 @@ export function SeletorTema({ compacto = false }) {
                  pinta com a classe `.amostra-acento`, então ela mostra sempre a
                  cor exata que o clique vai aplicar. */
               data-accent={a.value}
-              className={`amostra-acento flex size-6 cursor-pointer items-center justify-center rounded-full ring-offset-2 ring-offset-surface transition-transform hover:scale-110 ${
+              className={`amostra-acento flex size-4 cursor-pointer items-center justify-center rounded-full ring-offset-2 ring-offset-surface transition-transform hover:scale-110 ${
                 ativo ? "ring-2 ring-text" : ""
               }`}
             >
-              {ativo && <Check size={13} strokeWidth={3} className="text-white" />}
+              {ativo && <Check size={10} strokeWidth={3} className="text-white" />}
             </button>
           );
         })}
