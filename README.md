@@ -186,6 +186,25 @@ pode isso".
 
 ---
 
+## Publicar na Vercel
+
+A aplicação vive em `helpnet/`, então configure **Root Directory: `helpnet`** no projeto
+da Vercel. O resto — detectar o Vite, rodar `npm run build`, servir o `dist/` — ela faz
+sozinha.
+
+Uma variável de ambiente: **`VITE_API_URL`**, apontando para a API publicada. Ela é lida
+no momento do build, não em tempo de execução — mudar o valor exige um novo deploy.
+
+O `vercel.json` deste diretório reescreve toda rota para o `index.html`. Sem isso, abrir
+`/atendimento/dashboard` direto ou dar F5 nessa rota retorna 404: não existe arquivo com
+esse nome, quem resolve as rotas é o React Router, dentro do navegador.
+
+Do lado da API, o backend precisa liberar o domínio da Vercel em `CORS_ALLOWED_ORIGINS`.
+Sem isso o navegador bloqueia toda requisição, inclusive o login — e o erro aparece no
+console, não na tela.
+
+---
+
 ## Limitações conhecidas
 
 - **Filtros no cliente.** O `GET /chamados` aceita filtros no servidor, mas o front ainda
@@ -196,6 +215,3 @@ pode isso".
 - **Sem "esqueci minha senha".** Depende de envio de e-mail, que não está configurado.
   Hoje a saída é um ADMIN redefinir a senha da pessoa.
 - **Sem busca por protocolo** na lista de chamados.
-- **Ainda não preparado para deploy.** Falta um `vercel.json` (ou equivalente) com
-  rewrite para o `index.html`, senão abrir uma rota direto retorna 404; e o CORS do
-  backend hoje só aceita `localhost`.
