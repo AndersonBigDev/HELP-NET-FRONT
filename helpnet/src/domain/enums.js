@@ -71,9 +71,37 @@ export function urgenciaEhLivre(categoria) {
 export const StatusChamado = {
   ABERTO: { value: "ABERTO", label: "Aberto", color: "info" },
   EM_ANDAMENTO: { value: "EM_ANDAMENTO", label: "Em Andamento", color: "warning" },
+  PAUSADO: { value: "PAUSADO", label: "Pausado", color: "warning" },
   RESOLVIDO: { value: "RESOLVIDO", label: "Resolvido", color: "success" },
   ESCALONADO: { value: "ESCALONADO", label: "Escalonado", color: "warning" },
   FECHADO: { value: "FECHADO", label: "Fechado", color: "neutral" },
+};
+
+// Espelham StatusChamado.isEncerrado() e isEmAtendimento() no backend. Centralizados
+// aqui porque a mesma pergunta aparece na fila, no SLA, no painel e no dashboard.
+export const STATUS_ENCERRADOS = ["RESOLVIDO", "FECHADO"];
+export const STATUS_EM_ATENDIMENTO = ["EM_ANDAMENTO", "ESCALONADO", "PAUSADO"];
+
+export function statusEncerrado(status) {
+  return STATUS_ENCERRADOS.includes(status);
+}
+
+export function statusEmAtendimento(status) {
+  return STATUS_EM_ATENDIMENTO.includes(status);
+}
+
+// Trilha de histórico — espelha o enum TipoEventoChamado do backend.
+export const TipoEventoChamado = {
+  ABERTURA: { value: "ABERTURA", label: "Chamado aberto", color: "info" },
+  ATRIBUICAO: { value: "ATRIBUICAO", label: "Atendimento assumido", color: "info" },
+  STATUS: { value: "STATUS", label: "Status alterado", color: "neutral" },
+  PAUSA: { value: "PAUSA", label: "Atendimento pausado", color: "warning" },
+  RETOMADA: { value: "RETOMADA", label: "Atendimento retomado", color: "info" },
+  ESCALONAMENTO: { value: "ESCALONAMENTO", label: "Chamado escalonado", color: "warning" },
+  RESOLUCAO: { value: "RESOLUCAO", label: "Chamado resolvido", color: "success" },
+  REABERTURA: { value: "REABERTURA", label: "Chamado reaberto", color: "danger" },
+  ANOTACAO: { value: "ANOTACAO", label: "Anotação do atendimento", color: "neutral" },
+  AVALIACAO: { value: "AVALIACAO", label: "Chamado avaliado", color: "success" },
 };
 
 export function optionsOf(dict) {

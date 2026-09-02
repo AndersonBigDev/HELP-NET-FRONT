@@ -1,4 +1,4 @@
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Headset } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Badge } from "../../components/ui/Badge";
 import { SlaTag } from "../../components/ui/SlaTag";
@@ -34,6 +34,23 @@ export function ChamadoFilaItem({ chamado }) {
           {chamado.solicitanteNome}
           {chamado.setor && ` · ${Setor[chamado.setor]?.label ?? chamado.setor}`}
           {` · ${new Date(chamado.dataAbertura).toLocaleString("pt-BR")}`}
+        </p>
+
+        {/* Quem está com o chamado é a primeira coisa que a fila precisa dizer: sem
+            isso, dois atendentes pegam o mesmo item. `responsavelNome` vem
+            "Não atribuído" do backend quando não há ninguém, então quem decide é o id. */}
+        <p className="mt-1 flex items-center gap-1.5 text-xs">
+          {chamado.responsavelId ? (
+            <>
+              <Headset size={12} className="shrink-0 text-text-faint" />
+              <span className="truncate text-text-muted">
+                {chamado.status === "PAUSADO" ? "Pausado por" : "Em atendimento com"}{" "}
+                <span className="text-text">{chamado.responsavelNome}</span>
+              </span>
+            </>
+          ) : (
+            <span className="text-text-faint">Sem responsável — disponível para assumir</span>
+          )}
         </p>
       </div>
 

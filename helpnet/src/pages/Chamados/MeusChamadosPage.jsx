@@ -10,9 +10,12 @@ import { EmptyState, ErrorBanner, Spinner } from "../../components/ui/Feedback";
 import { Categoria, StatusChamado, Urgencia } from "../../domain/enums";
 import { ChamadoAnexos } from "./ChamadoAnexos";
 import { ChamadoMensagens } from "./ChamadoMensagens";
+import { HistoricoChamado } from "./HistoricoChamado";
 import { NovoChamadoModal } from "./NovoChamadoModal";
 
-const STATUS_ATIVOS = ["ABERTO", "EM_ANDAMENTO"];
+// Espelha o limite do backend (RN: 3 chamados ativos por solicitante). PAUSADO entra
+// na conta porque o `ChamadoService.criarChamado` também o considera ativo.
+const STATUS_ATIVOS = ["ABERTO", "EM_ANDAMENTO", "PAUSADO"];
 
 // O JWT carrega o id do usuário (claim `id`), então a comparação é exata para todos
 // os perfis. Antes, o perfil USUARIO caía num casamento por nome — que confunde
@@ -128,8 +131,26 @@ export function MeusChamadosPage() {
                       <DataField label="Equipamento" value={c.equipamentoNome} />
                       <DataField label="Aberto em" value={new Date(c.dataAbertura).toLocaleString("pt-BR")} />
                     </dl>
+
+                    {/* Pausado é o único status em que o chamado está parado por decisão
+                        do suporte — o motivo fica na trilha, aqui vai só o aviso. */}
+                    {c.status === "PAUSADO" && (
+                      <p className="mb-4 rounded-lg border border-warning/30 bg-warning-soft px-3 py-2 text-xs text-warning">
+                        O atendimento está pausado. O motivo e a previsão estão no histórico abaixo.
+                      </p>
+                    )}
+
                     <p className="mb-4 text-sm text-text-muted">{c.descricao}</p>
                     <ChamadoAnexos chamadoId={c.id} />
+
+                    {/* Acompanhamento do atendimento em modo leitura: o solicitante vê
+                        quem assumiu, quando pausou e o que o suporte registrou. */}
+                    <div className="mt-5 border-t border-border-soft pt-4">
+                      <HistoricoChamado
+                        chamadoId={c.id}
+                        avisoLeitura="Registro mantido pelo suporte. Para falar com o atendente, use a conversa abaixo."
+                      />
+                    </div>
 
                     {/* RF08: o solicitante conversa com o atendente pelo mesmo fio. */}
                     <div className="mt-5 border-t border-border-soft pt-4">
