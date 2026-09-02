@@ -42,11 +42,17 @@ apiClient.interceptors.response.use(
   (error) => {
     const status = error.response?.status;
 
+    // O login é o único 401 que NÃO significa sessão caída: não havia sessão para cair.
+    // Sem esta exceção, quem erra a senha lê "sua sessão expirou" e tenta de novo a mesma
+    // senha, porque a mensagem real do servidor ("E-mail ou senha inválidos") é descartada
+    // aqui antes de chegar à tela.
+    const ehLogin = (error.config?.url ?? "").includes("/auth/login");
+
     // O backend não tem AuthenticationEntryPoint: requisição sem autenticação válida
     // volta 403 de corpo vazio, não 401. Como o mesmo 403 também significa "seu perfil
     // não pode fazer isso", olhamos a validade do token para separar os dois casos —
     // senão uma negativa de permissão derrubaria a sessão de quem está logado.
-    if (status === 401 || (status === 403 && sessaoInvalida())) {
+    if (!ehLogin && (status === 401 || (status === 403 && sessaoInvalida()))) {
       tokenStorage.clear();
       aoExpirarSessao?.();
       return Promise.reject(new Error("Sua sessão expirou. Entre novamente."));
