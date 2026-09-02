@@ -11,12 +11,16 @@ import { EquipamentosPage } from "./pages/Equipamentos/EquipamentosPage";
 import { LoginPage } from "./pages/Login/LoginPage";
 import { UsuariosPage } from "./pages/Usuarios/UsuariosPage";
 
+// Tela inicial por perfil. Quem atende cai no dashboard: é a visão da operação
+// inteira e, com os indicadores clicáveis, também o caminho mais curto para cada
+// recorte da fila. O perfil USUARIO não alcança a área de atendimento (RoleRoute),
+// então continua indo para os próprios chamados.
 function Home() {
   const { user } = useAuth();
   return user?.perfil === "USUARIO" ? (
     <Navigate to="/meus-chamados" replace />
   ) : (
-    <Navigate to="/atendimento" replace />
+    <Navigate to="/atendimento/dashboard" replace />
   );
 }
 

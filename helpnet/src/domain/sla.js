@@ -1,3 +1,5 @@
+import { STATUS_ENCERRADOS } from "./enums";
+
 // RNF03 — política de SLA.
 //
 // O backend passou a calcular o prazo e a devolvê-lo em `ChamadoResponseDTO.prazoLimite`
@@ -11,9 +13,6 @@ export const PRAZO_HORAS_POR_URGENCIA = {
   MEDIA: 24,
   NORMAL: 72,
 };
-
-// Chamado encerrado não acumula atraso.
-const STATUS_ENCERRADOS = ["RESOLVIDO", "FECHADO"];
 
 // Abaixo de 25% do prazo restante o chamado entra em estado de atenção.
 const FRACAO_ATENCAO = 0.25;
@@ -34,23 +33,38 @@ export function formatarDuracao(ms) {
 }
 
 /**
- * @returns {{ prazo: Date, horas: number, encerrado: boolean, atrasado: boolean,
- *             restanteMs: number, color: string, label: string }}
+ * @returns {{ prazo: Date, horas: number, encerrado: boolean, pausado: boolean,
+ *             atrasado: boolean, restanteMs: number, color: string, label: string }}
  */
 export function calcularSla(chamado, agora = new Date()) {
   const horas = PRAZO_HORAS_POR_URGENCIA[chamado.urgencia] ?? PRAZO_HORAS_POR_URGENCIA.NORMAL;
   const prazo = chamado.prazoLimite
     ? new Date(chamado.prazoLimite)
     : new Date(new Date(chamado.dataAbertura).getTime() + horas * UMA_HORA_MS);
-  const restanteMs = prazo.getTime() - agora.getTime();
+
+  // Enquanto o chamado está pausado o relógio para: o backend devolve o tempo parado
+  // ao `prazoLimite` na retomada (`ChamadoService.encerrarPausa`), então até lá a
+  // contagem fica congelada no instante da pausa — senão a tela mostraria um atraso
+  // que o servidor vai desfazer.
+  const pausado = chamado.status === "PAUSADO";
+  const referencia = pausado && chamado.pausadoEm ? new Date(chamado.pausadoEm) : agora;
+  const restanteMs = prazo.getTime() - referencia.getTime();
 
   if (STATUS_ENCERRADOS.includes(chamado.status)) {
-    return { prazo, horas, encerrado: true, atrasado: false, restanteMs, color: "neutral", label: "SLA encerrado" };
+    return { prazo, horas, encerrado: true, pausado: false, atrasado: false, restanteMs, color: "neutral", label: "SLA encerrado" };
+  }
+
+  if (pausado) {
+    return {
+      prazo, horas, encerrado: false, pausado: true, atrasado: restanteMs <= 0, restanteMs,
+      label: restanteMs > 0 ? `SLA pausado · restam ${formatarDuracao(restanteMs)}` : "SLA pausado · em atraso",
+      color: restanteMs > 0 ? "neutral" : "danger",
+    };
   }
 
   if (restanteMs <= 0) {
     return {
-      prazo, horas, encerrado: false, atrasado: true, restanteMs,
+      prazo, horas, encerrado: false, pausado: false, atrasado: true, restanteMs,
       label: `Atrasado há ${formatarDuracao(-restanteMs)}`,
       color: "danger",
     };
@@ -58,7 +72,7 @@ export function calcularSla(chamado, agora = new Date()) {
 
   const emAtencao = restanteMs <= horas * UMA_HORA_MS * FRACAO_ATENCAO;
   return {
-    prazo, horas, encerrado: false, atrasado: false, restanteMs,
+    prazo, horas, encerrado: false, pausado: false, atrasado: false, restanteMs,
     label: `Vence em ${formatarDuracao(restanteMs)}`,
     color: emAtencao ? "warning" : "neutral",
   };

@@ -10,6 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { Link } from "react-router-dom";
 import { corToken } from "../../lib/chartTheme";
 
 // Specs fixos: eixos/grade recessivos (hairline sólida), barras finas com a ponta
@@ -35,7 +36,12 @@ function TooltipCustomizado({ active, payload, label, sufixo = "chamados" }) {
 
 // Colunas por status. A identidade de cada coluna vem do rótulo do eixo; a cor é
 // encoding redundante, a mesma dos badges de status na fila.
-export function GraficoPorStatus({ dados }) {
+//
+// `onSelecionar` recebe o dado da coluna clicada — é o que transforma o gráfico em
+// navegação para a fila recortada. Opcional: sem ele o gráfico continua só leitura.
+// A tabela abaixo de cada gráfico oferece o mesmo caminho por link, para quem navega
+// por teclado ou leitor de tela não depender do clique na barra.
+export function GraficoPorStatus({ dados, onSelecionar }) {
   return (
     <ResponsiveContainer width="100%" height={240}>
       <BarChart data={dados} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
@@ -43,7 +49,13 @@ export function GraficoPorStatus({ dados }) {
         <XAxis dataKey="label" tick={eixo()} tickLine={false} axisLine={{ stroke: corToken("border") }} interval={0} />
         <YAxis tick={eixo()} tickLine={false} axisLine={false} allowDecimals={false} width={40} />
         <Tooltip content={<TooltipCustomizado />} cursor={{ fill: corToken("surface-2") }} />
-        <Bar dataKey="total" maxBarSize={ESPESSURA_BARRA} radius={[4, 4, 0, 0]}>
+        <Bar
+          dataKey="total"
+          maxBarSize={ESPESSURA_BARRA}
+          radius={[4, 4, 0, 0]}
+          onClick={(d) => onSelecionar?.(d?.payload ?? d)}
+          className={onSelecionar ? "cursor-pointer" : undefined}
+        >
           {dados.map((d) => (
             <Cell key={d.label} fill={d.cor} />
           ))}
@@ -54,7 +66,7 @@ export function GraficoPorStatus({ dados }) {
 }
 
 // Série única de magnitude por setor: um hue só, identidade no eixo, sem legenda.
-export function GraficoPorSetor({ dados }) {
+export function GraficoPorSetor({ dados, onSelecionar }) {
   return (
     <ResponsiveContainer width="100%" height={240}>
       <BarChart data={dados} layout="vertical" margin={{ top: 8, right: 16, bottom: 0, left: 8 }}>
@@ -62,7 +74,14 @@ export function GraficoPorSetor({ dados }) {
         <XAxis type="number" tick={eixo()} tickLine={false} axisLine={false} allowDecimals={false} />
         <YAxis type="category" dataKey="label" tick={eixo()} tickLine={false} axisLine={false} width={110} />
         <Tooltip content={<TooltipCustomizado />} cursor={{ fill: corToken("surface-2") }} />
-        <Bar dataKey="total" fill={corToken("accent")} maxBarSize={ESPESSURA_BARRA} radius={[0, 4, 4, 0]} />
+        <Bar
+          dataKey="total"
+          fill={corToken("accent")}
+          maxBarSize={ESPESSURA_BARRA}
+          radius={[0, 4, 4, 0]}
+          onClick={(d) => onSelecionar?.(d?.payload ?? d)}
+          className={onSelecionar ? "cursor-pointer" : undefined}
+        />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -70,10 +89,23 @@ export function GraficoPorSetor({ dados }) {
 
 // Série única no tempo: linha de 2px, marcador >= 8px com anel de 2px na cor da
 // superfície para não sumir onde cruza a linha.
-export function GraficoAberturasPorDia({ dados }) {
+export function GraficoAberturasPorDia({ dados, onSelecionar }) {
+  // Numa linha não há área clicável por ponto como na barra, então o clique vem do
+  // próprio gráfico: o recharts informa o rótulo ativo e daí achamos o dia.
+  function aoClicar(estado) {
+    if (!onSelecionar) return;
+    const item = dados.find((d) => d.label === estado?.activeLabel);
+    if (item) onSelecionar(item);
+  }
+
   return (
     <ResponsiveContainer width="100%" height={240}>
-      <LineChart data={dados} margin={{ top: 8, right: 16, bottom: 0, left: -20 }}>
+      <LineChart
+        data={dados}
+        margin={{ top: 8, right: 16, bottom: 0, left: -20 }}
+        onClick={aoClicar}
+        className={onSelecionar ? "cursor-pointer" : undefined}
+      >
         <CartesianGrid stroke={corToken("border")} strokeWidth={1} vertical={false} />
         <XAxis dataKey="label" tick={eixo()} tickLine={false} axisLine={{ stroke: corToken("border") }} />
         <YAxis tick={eixo()} tickLine={false} axisLine={false} allowDecimals={false} width={40} />
@@ -94,7 +126,8 @@ export function GraficoAberturasPorDia({ dados }) {
 }
 
 // Cada gráfico acompanha a mesma informação em tabela — o dado nunca fica só na cor.
-export function TabelaDados({ dados, colunaRotulo, colunaValor = "Chamados" }) {
+// Quando `linkDe` é passado, cada linha também é o caminho para a fila recortada.
+export function TabelaDados({ dados, colunaRotulo, colunaValor = "Chamados", linkDe }) {
   return (
     <details className="mt-3">
       <summary className="cursor-pointer text-xs text-text-faint hover:text-text-muted">
@@ -110,7 +143,15 @@ export function TabelaDados({ dados, colunaRotulo, colunaValor = "Chamados" }) {
         <tbody>
           {dados.map((d) => (
             <tr key={d.label} className="border-b border-border-soft/50">
-              <td className="py-1 text-text-muted">{d.label}</td>
+              <td className="py-1 text-text-muted">
+                {linkDe ? (
+                  <Link to={linkDe(d)} className="hover:text-accent hover:underline">
+                    {d.label}
+                  </Link>
+                ) : (
+                  d.label
+                )}
+              </td>
               <td className="py-1 text-right text-text tabular-nums">{d.total}</td>
             </tr>
           ))}

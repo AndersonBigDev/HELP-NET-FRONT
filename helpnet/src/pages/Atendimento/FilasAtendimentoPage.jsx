@@ -1,5 +1,6 @@
-import { Download, Inbox, RefreshCw } from "lucide-react";
-import { useMemo, useState } from "react";
+import { ArrowLeft, Download, Inbox, RefreshCw } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
 import { EmptyState, ErrorBanner, Spinner } from "../../components/ui/Feedback";
 import { Categoria, NivelAtendente, Setor, StatusChamado, Urgencia } from "../../domain/enums";
@@ -12,9 +13,12 @@ import { FilaFiltros } from "./FilaFiltros";
 import {
   aplicarFiltros,
   FILTROS_VAZIOS,
+  filtrosDaUrl,
+  paramsDosFiltros,
   pertenceAMinhaFila,
   temCriterioDeAfinidade,
   temFiltroAtivo,
+  tituloDaFila,
 } from "./filtros";
 
 // RF13 / RNF05 — o backend não expõe os logs de escalonamento (o repository existe,
@@ -56,7 +60,22 @@ export function FilasAtendimentoPage() {
   const { meuPerfil, porId, loading: carregandoUsuarios } = useUsuarios();
 
   const [minhaFila, setMinhaFila] = useState(false);
-  const [filtros, setFiltros] = useState(FILTROS_VAZIOS);
+
+  // O filtro mora na URL, não em `useState`: é o que permite o dashboard abrir esta
+  // tela já recortada ("só os abertos") por um link simples, e o que mantém o botão
+  // "voltar" do navegador desfazendo o recorte em vez de sair da tela.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filtros = useMemo(() => filtrosDaUrl(searchParams), [searchParams]);
+
+  // `replace` para uma sessão de ajuste de chips não empilhar dez entradas no
+  // histórico — voltar deve devolver ao dashboard, não ao chip anterior.
+  const definirFiltros = useCallback(
+    (novos) => setSearchParams(paramsDosFiltros(novos), { replace: true }),
+    [setSearchParams],
+  );
+
+  const veioFiltrado = temFiltroAtivo(filtros);
+  const titulo = tituloDaFila(filtros, (s) => StatusChamado[s]?.label ?? s);
 
   const semAfinidade = !carregandoUsuarios && !temCriterioDeAfinidade(meuPerfil);
 
@@ -76,12 +95,23 @@ export function FilasAtendimentoPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
+      {/* Quem chegou por um indicador do dashboard precisa do caminho de volta. */}
+      {veioFiltrado && (
+        <Link
+          to="/atendimento/dashboard"
+          className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-text-muted hover:text-text"
+        >
+          <ArrowLeft size={16} />
+          Voltar para o dashboard
+        </Link>
+      )}
+
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-text">Filas de Atendimento</h1>
+          <h1 className="text-2xl font-semibold text-text">{titulo}</h1>
           <p className="text-sm text-text-muted">
             {visiveis.length} {visiveis.length === 1 ? "chamado" : "chamados"}
-            {temFiltroAtivo(filtros) && ` de ${minhaFila ? "sua fila" : chamados.length}`}
+            {veioFiltrado && ` de ${minhaFila ? "sua fila" : chamados.length}`}
             {atrasados > 0 && (
               <span className="text-danger">
                 {" · "}
@@ -121,7 +151,11 @@ export function FilasAtendimentoPage() {
         </p>
       )}
 
-      <FilaFiltros filtros={filtros} onChange={setFiltros} onLimpar={() => setFiltros(FILTROS_VAZIOS)} />
+      <FilaFiltros
+        filtros={filtros}
+        onChange={definirFiltros}
+        onLimpar={() => definirFiltros(FILTROS_VAZIOS)}
+      />
 
       {loading && (
         <div className="flex justify-center py-16">
@@ -142,9 +176,9 @@ export function FilasAtendimentoPage() {
       {!loading && !error && !(minhaFila && semAfinidade) && visiveis.length === 0 && (
         <EmptyState
           icon={Inbox}
-          title={temFiltroAtivo(filtros) ? "Nenhum chamado para esses filtros" : "Fila vazia"}
+          title={veioFiltrado ? "Nenhum chamado para esses filtros" : "Fila vazia"}
           description={
-            temFiltroAtivo(filtros)
+            veioFiltrado
               ? "Ajuste ou limpe os filtros para ver mais resultados."
               : "Novos chamados aparecem aqui assim que forem abertos."
           }
