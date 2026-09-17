@@ -29,7 +29,7 @@ export function LoginPage() {
       await login(email, senha);
       navigate("/", { replace: true });
     } catch (err) {
-      mensagemServidor = err.response?.data?.error || err.message || "Erro ao efetuar login.";
+      mensagemServidor = err.message;
       setError(mensagemServidor);
     } finally {
       setLoading(false);
