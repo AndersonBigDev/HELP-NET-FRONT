@@ -19,12 +19,18 @@ export function LoginPage() {
   async function handleSubmit(e) {
     e.preventDefault();
     setError(null);
+    // 1. Validação local de domínio (espelhando a regra RN02 do backend)
+    if (!email.trim().toLowerCase().endsWith("@helpdesk.com")) {
+      setError("Domínio inválido. Sistema permite acesso apenas a emails @helpdesk.com.");
+      return;
+    }
     setLoading(true);
     try {
       await login(email, senha);
       navigate("/", { replace: true });
     } catch (err) {
-      setError(err.message);
+      mensagemServidor = err.response?.data?.error || err.message || "Erro ao efetuar login.";
+      setError(mensagemServidor);
     } finally {
       setLoading(false);
     }
