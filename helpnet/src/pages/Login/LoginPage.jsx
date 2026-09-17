@@ -29,8 +29,26 @@ export function LoginPage() {
       await login(email, senha);
       navigate("/", { replace: true });
     } catch (err) {
-      mensagemServidor = err.message;
-      setError(mensagemServidor);
+
+    // 2. Mapeamento robusto de erros HTTP e exceções do backend
+    const status = err.response?.status;
+    const data = err.response?.data;
+
+    let mensagemExibida = "Erro ao efetuar login. Tente novamente.";
+
+    if (status === 401 || status === 400) {
+      // Trata erro de e-mail/senha incorretos ou má requisição
+      mensagemExibida = data?.message || data?.error || "E-mail ou senha incorretos.";
+    } else if (data?.message) {
+      mensagemExibida = data.message;
+    } else if (data?.error) {
+      mensagemExibida = data.error;
+    } else if (err.message) {
+      mensagemExibida = err.message;
+    }
+
+    setError(mensagemExibida);
+
     } finally {
       setLoading(false);
     }
